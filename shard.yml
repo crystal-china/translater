@@ -1,0 +1,13 @@
+name: bing_translate_terminal
+version: 0.1.0
+
+authors:
+  - Billy.Zheng <vil963@gmail.com>
+
+targets:
+  bing_translate_terminal:
+    main: src/bing_translate_terminal.cr
+
+crystal: 1.7.0-dev
+
+license: MIT
