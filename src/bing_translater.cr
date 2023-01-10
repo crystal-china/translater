@@ -2,11 +2,18 @@ require "option_parser"
 require "selenium"
 require "./bing_translater/*"
 
-ARGV << STDIN.gets.not_nil! if STDIN.info.type.pipe?
+stdin = [] of String
 
-ARGV << "--help" if ARGV.empty?
+if STDIN.info.type.pipe?
+  while (input = STDIN.gets)
+    stdin << input
+  end
+  content = stdin.join("\n")
+else
+  ARGV << "--help" if ARGV.empty?
 
-content = ARGV[-1]
+  content = ARGV[-1]
+end
 
 target_language = "Chinese"
 
@@ -52,7 +59,7 @@ end
 
 BingTranslater.translate(
   target_language: target_language,
-  content: content,
+  content: content.strip,
   driver_path: "~/utils/bin/geckodriver"
 ) if content != "--help"
 
@@ -74,9 +81,13 @@ module BingTranslater
 
     source_content_ele = session.find_element(:css, "textarea#tta_input_ta")
 
-    content.each_char do |e|
+    content1 = content[0..-5]
+    content2 = content[-4..-1]
+
+    source_content_ele.send_keys(key: content1)
+    content2.each_char do |e|
       source_content_ele.send_keys(key: e.to_s)
-      sleep 0.02
+      sleep 0.0001
     end
 
     # Clean Cookies
