@@ -8,6 +8,10 @@ targets:
   bing_translate_terminal:
     main: src/bing_translate_terminal.cr
 
+dependencies:
+  selenium:
+    github: matthewmcgarvey/selenium.cr
+
 crystal: 1.7.0-dev
 
 license: MIT

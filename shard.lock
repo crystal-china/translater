@@ -1,0 +1,6 @@
+version: 2.0
+shards:
+  selenium:
+    git: https://github.com/matthewmcgarvey/selenium.cr.git
+    version: 0.10.0
+
