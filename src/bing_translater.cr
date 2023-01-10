@@ -4,12 +4,9 @@ require "./bing_translater/*"
 
 ARGV << STDIN.gets.not_nil! if STDIN.info.type.pipe?
 
-content = ARGV[-1]?
+ARGV << "--help" if ARGV.empty?
 
-if content.nil?
-  ARGV << "--help"
-  exit
-end
+content = ARGV[-1]
 
 target_language = "Chinese"
 
@@ -53,57 +50,58 @@ USAGE
   end
 end
 
-service = Selenium::Service.firefox(driver_path: File.expand_path("~/utils/bin/geckodriver", home: true))
-driver = Selenium::Driver.for(:firefox, service: service)
+BingTranslater.translate(
+  target_language: target_language,
+  content: content,
+  driver_path: "~/utils/bin/geckodriver"
+) if content != "--help"
 
-firefox_options = Selenium::Firefox::Capabilities::FirefoxOptions.new
+module BingTranslater
+  def self.translate(target_language, content, driver_path)
+    service = Selenium::Service.firefox(driver_path: File.expand_path(driver_path, home: true))
 
-firefox_options.args = ["--headless"]
+    driver = Selenium::Driver.for(:firefox, service: service)
 
-capabilities = Selenium::Firefox::Capabilities.new
-capabilities.firefox_options = firefox_options
+    firefox_options = Selenium::Firefox::Capabilities::FirefoxOptions.new
+    firefox_options.args = ["--headless"]
 
-session = driver.create_session(capabilities)
+    capabilities = Selenium::Firefox::Capabilities.new
+    capabilities.firefox_options = firefox_options
 
-session.navigate_to("https://www.bing.com/translator")
+    session = driver.create_session(capabilities)
 
-source_content_ele = session.find_element(:css, "textarea#tta_input_ta")
+    session.navigate_to("https://www.bing.com/translator")
 
-content.each_char do |e|
-  source_content_ele.send_keys(key: e.to_s)
-  sleep 0.02
+    source_content_ele = session.find_element(:css, "textarea#tta_input_ta")
+
+    content.each_char do |e|
+      source_content_ele.send_keys(key: e.to_s)
+      sleep 0.02
+    end
+
+    # Clean Cookies
+    cookie_manager = Selenium::CookieManager.new(command_handler: session.command_handler, session_id: session.id)
+    cookie_manager.delete_all_cookies
+
+    x = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
+
+    if target_language == "Chinese"
+      x.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "zh-Hans"})
+    end
+
+    result = ""
+
+    loop do
+      result = x.execute_script(%{return document.querySelector("textarea#tta_output_ta").value})
+
+      break unless result.strip == "..."
+
+      sleep 0.1
+    end
+
+    puts result
+  ensure
+    session.delete unless session.nil?
+    driver.stop unless driver.nil?
+  end
 end
-
-# Clean Cookies
-cookie_manager = Selenium::CookieManager.new(command_handler: session.command_handler, session_id: session.id)
-cookie_manager.delete_all_cookies
-
-x = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
-
-if target_language == "Chinese"
-  x.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "zh-Hans"})
-end
-
-result = ""
-
-loop do
-  result = x.execute_script(%{return document.querySelector("textarea#tta_output_ta").value})
-
-  break unless result.strip == "..."
-
-  sleep 0.1
-end
-
-puts result
-
-at_exit do
-  session.delete
-  driver.stop
-end
-
-# TODO: Write documentation for `BingTranslater`
-# module BingTranslater
-#   VERSION = "0.1.0"
-
-#   # TODO: Put your code here
-# end
