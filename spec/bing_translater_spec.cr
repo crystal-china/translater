@@ -1,6 +1,6 @@
 require "./spec_helper"
 
-describe BingTranslateTerminal do
+describe BingTranslater do
   # TODO: Write tests
 
   it "works" do
