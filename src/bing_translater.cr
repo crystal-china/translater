@@ -1,5 +1,6 @@
 require "option_parser"
 require "selenium"
+require "webdrivers"
 require "./bing_translater/*"
 
 stdin = [] of String
@@ -57,11 +58,15 @@ USAGE
   end
 end
 
+webdriver_path = Webdrivers::Geckodriver.install
+
+stripped_content = content.strip
+
 BingTranslater.translate(
   target_language: target_language,
-  content: content.strip,
-  driver_path: "~/utils/bin/geckodriver"
-) if content != "--help"
+  content: stripped_content,
+  driver_path: webdriver_path
+) if stripped_content != "--help"
 
 module BingTranslater
   def self.translate(target_language, content, driver_path)
@@ -87,7 +92,7 @@ module BingTranslater
     source_content_ele.send_keys(key: content1)
     content2.each_char do |e|
       source_content_ele.send_keys(key: e.to_s)
-      sleep 0.0001
+      sleep 0.01
     end
 
     # Clean Cookies
@@ -97,7 +102,12 @@ module BingTranslater
     x = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
 
     if target_language == "Chinese"
-      x.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "zh-Hans"})
+      begin
+        x.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "zh-Hans"})
+      rescue e : Selenium::Error
+        puts e.message
+        exit
+      end
     end
 
     result = ""

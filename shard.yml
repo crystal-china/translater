@@ -11,6 +11,8 @@ targets:
 dependencies:
   selenium:
     github: matthewmcgarvey/selenium.cr
+  webdrivers:
+    github: matthewmcgarvey/webdrivers.cr
 
 crystal: 1.7.0-dev
 
