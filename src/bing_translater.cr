@@ -4,7 +4,7 @@ require "webdrivers"
 require "./bing_translater/*"
 
 target_language = "Chinese"
-browser = "Firefox"
+browser = "firefox"
 debug_mode = false
 stdin = [] of String
 content = ""
@@ -44,15 +44,15 @@ default is translate English to Chinese.
   parser.on(
     "-e ENGINE",
     "--target=ENGINE",
-    "Specify engine, support firefox|chrome for now, default is firefox.
+    "Specify engine, only support firefox for now, default is firefox.
 ") do |engine|
     case engine
     when "firefox"
-      browser = "Firefox"
+      browser = "firefox"
     when "chrome"
-      browser = "Chrome"
+      browser = "chrome"
     else
-      STDERR.puts "Supported options: -e firefox|chrome"
+      STDERR.puts "Supported options: -e firefox"
       exit
     end
   end
@@ -71,7 +71,7 @@ default is translate English to Chinese.
     end
   end
 
-  parser.on("-D", "--debug", "Debug 模式") do
+  parser.on("-D", "--debug", "Debug mode") do
     debug_mode = true
   end
 
@@ -98,34 +98,49 @@ default is translate English to Chinese.
   end
 end
 
-webdriver_path = Webdrivers::Geckodriver.install
-
 BingTranslater.translate(
   target_language: target_language,
   content: content,
-  driver_path: webdriver_path,
-  debug_mode: debug_mode
+  debug_mode: debug_mode,
+  browser: browser
 ) if content != "--help"
 
 module BingTranslater
-  def self.translate(target_language, content, driver_path, debug_mode)
-    service = Selenium::Service.firefox(driver_path: File.expand_path(driver_path, home: true))
+  def self.translate(target_language, content, debug_mode, browser)
+    case browser
+    when "firefox"
+      driver_path = Webdrivers::Geckodriver.install
+      service = Selenium::Service.firefox(driver_path: File.expand_path(driver_path, home: true))
+      driver = Selenium::Driver.for(:firefox, service: service)
+      options = Selenium::Firefox::Capabilities::FirefoxOptions.new
+      options.args = ["--headless"] unless debug_mode == true
 
-    driver = Selenium::Driver.for(:firefox, service: service)
+      capabilities = Selenium::Firefox::Capabilities.new
+      capabilities.firefox_options = options
+    when "chrome"
+      driver_path = Webdrivers::Chromedriver.install
+      service = Selenium::Service.chrome(driver_path: File.expand_path(driver_path, home: true))
+      driver = Selenium::Driver.for(:chrome, service: service)
 
-    firefox_options = Selenium::Firefox::Capabilities::FirefoxOptions.new
-    firefox_options.args = ["--headless"] unless debug_mode == true
+      options = Selenium::Chrome::Capabilities::ChromeOptions.new
+      options.args = ["headless"] unless debug_mode == true
 
-    capabilities = Selenium::Firefox::Capabilities.new
-    capabilities.firefox_options = firefox_options
+      capabilities = Selenium::Chrome::Capabilities.new
+      capabilities.chrome_options = options
+    else
+      STDERR.puts "Only support firefox|chrome, firefox is default."
+      exit
+    end
 
     session = driver.create_session(capabilities)
 
     session.navigate_to("https://www.bing.com/translator")
 
-    source_content_ele = session.find_element(:css, "textarea#tta_input_ta")
+    while session.find_elements(:css, "select#tta_tgtsl optgroup#t_tgtRecentLang option").empty?
+      sleep 0.2
+    end
 
-    sleep 0.1
+    source_content_ele = session.find_element(:css, "textarea#tta_input_ta")
 
     if content.size > 10
       content1 = content[0..-10]
@@ -156,7 +171,7 @@ module BingTranslater
       x.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "en"})
     end
 
-    sleep 10000 if debug_mode
+    gets if debug_mode
 
     result = ""
 
