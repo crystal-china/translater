@@ -33,7 +33,7 @@ jobs:
         run: |
           shards build --production --release --progress
           ASSERT_NAME=${BINARY_NAME}-${RELEASE_VERSION}-${PKG_ARCH}-apple-darwin.tar.gz
-          tar zcf ${ASSERT_NAME} bin/${BINARY_NAME} MIT-LICENCE
+          tar zcf ${ASSERT_NAME} bin/${BINARY_NAME} LICENSE
           echo ::set-output name=ASSERT_NAME::${ASSERT_NAME}
       - name: Release
         uses: softprops/action-gh-release@v1
