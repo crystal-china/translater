@@ -3,7 +3,7 @@ require "selenium"
 require "webdrivers"
 require "./bing_translater/*"
 
-target_language = "Chinese"
+target_language : String? = nil
 browser = "firefox"
 debug_mode = false
 stdin = [] of String
@@ -98,6 +98,14 @@ default is translate English to Chinese.
   end
 end
 
+if target_language.nil?
+  if content =~ /\p{Han}/
+    target_language = "English"
+  else
+    target_language = "Chinese"
+  end
+end
+
 BingTranslater.translate(
   target_language: target_language,
   content: content,
@@ -128,7 +136,7 @@ module BingTranslater
       capabilities = Selenium::Chrome::Capabilities.new
       capabilities.chrome_options = options
     else
-      STDERR.puts "Only support firefox|chrome, firefox is default."
+      STDERR.puts "Only support firefox for now, firefox is default."
       exit
     end
 
