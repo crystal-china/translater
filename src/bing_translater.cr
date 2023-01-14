@@ -61,15 +61,19 @@ Youdao don't support this option.
     parser.on(
       "-e ENGINE",
       "--engine=ENGINE",
-      "Specify engine used for translate, support bing|youdao for now.
+      "Specify engine used for translate, support bing|youdao|tencent for now.
 ") do |e|
       case e.downcase
       when "bing"
         engine = "bing"
       when "youdao"
         engine = "youdao"
+      when "tencent"
+        engine = "tencent"
+      when "alibaba"
+        engine = "alibaba"
       else
-        STDERR.puts "Supported options: -e bing|youado"
+        STDERR.puts "Supported options: -e bing|youado|tencent|alibaba"
         exit
       end
     end
@@ -127,7 +131,12 @@ Youdao don't support this option.
     begin
       case browser
       when "firefox"
-        driver_path = Webdrivers::Geckodriver.install
+        if Webdrivers::Geckodriver.driver_version
+          driver_path = Webdrivers::Geckodriver.driver_path
+        else
+          driver_path = Webdrivers::Geckodriver.install
+        end
+
         service = Selenium::Service.firefox(driver_path: File.expand_path(driver_path, home: true))
         driver = Selenium::Driver.for(:firefox, service: service)
         options = Selenium::Firefox::Capabilities::FirefoxOptions.new
@@ -136,7 +145,12 @@ Youdao don't support this option.
         capabilities = Selenium::Firefox::Capabilities.new
         capabilities.firefox_options = options
       when "chrome"
-        driver_path = Webdrivers::Chromedriver.install
+        if Webdrivers::Chromedriver.driver_version
+          driver_path = Webdrivers::Chromedriver.driver_path
+        else
+          driver_path = Webdrivers::Chromedriver.install
+        end
+
         service = Selenium::Service.chrome(driver_path: File.expand_path(driver_path, home: true))
         driver = Selenium::Driver.for(:chrome, service: service)
 
@@ -156,8 +170,10 @@ Youdao don't support this option.
       cookie_manager = Selenium::CookieManager.new(command_handler: session.command_handler, session_id: session.id)
       cookie_manager.delete_all_cookies
 
-      BingTranslater.bing_translater(session, content, debug_mode, target_language)
-      BingTranslater.youdao_translater(session, content, debug_mode)
+      BingTranslater.bing_translater(session, content, debug_mode, target_language) if engine == "bing"
+      BingTranslater.youdao_translater(session, content, debug_mode) if engine == "youdao"
+      BingTranslater.tencent_translater(session, content, debug_mode) if engine == "tencent"
+      BingTranslater.alibaba_translater(session, content, debug_mode) if engine == "alibaba"
     rescue e : Selenium::Error
       STDERR.puts e.message
       exit
@@ -257,6 +273,92 @@ Youdao don't support this option.
     end
 
     puts "---------------Youdao---------------\n#{result.first.text}"
+  end
+
+  def self.tencent_translater(session, content, debug_mode)
+    session.navigate_to("https://fanyi.qq.com/")
+
+    while (elements = session.find_elements(:css, ".textpanel-source-textarea textarea"); elements.empty?)
+      sleep 0.2
+    end
+
+    source_content_ele = elements.first
+
+    if content.size > 10
+      content1 = content[0..-10]
+      content2 = content[-9..-1]
+
+      source_content_ele.send_keys(key: content1)
+      content2.each_char do |e|
+        source_content_ele.send_keys(key: e.to_s)
+        sleep 0.01
+      end
+    else
+      content.each_char do |e|
+        source_content_ele.send_keys(key: e.to_s)
+        sleep 0.01
+      end
+    end
+
+    if debug_mode
+      STDERR.puts "Press any key to continue ..."
+      gets
+    end
+
+    result = [] of Selenium::Element
+
+    loop do
+      result = session.find_elements(:css, ".textpanel-target-textblock span.text-dst")
+
+      break unless result.empty?
+
+      sleep 1
+    end
+
+    puts "---------------Tencent---------------\n#{result.first.text}"
+  end
+
+  def self.alibaba_translater(session, content, debug_mode)
+    session.navigate_to("https://translate.alibaba.com/")
+
+    while (elements = session.find_elements(:css, "textarea#source"); elements.empty?)
+      sleep 0.2
+    end
+
+    source_content_ele = elements.first
+
+    if content.size > 10
+      content1 = content[0..-10]
+      content2 = content[-9..-1]
+
+      source_content_ele.send_keys(key: content1)
+      content2.each_char do |e|
+        source_content_ele.send_keys(key: e.to_s)
+        sleep 0.01
+      end
+    else
+      content.each_char do |e|
+        source_content_ele.send_keys(key: e.to_s)
+        sleep 0.01
+      end
+    end
+
+    if debug_mode
+      STDERR.puts "Press any key to continue ..."
+      gets
+    end
+
+    result = [] of Selenium::Element
+
+    loop do
+      result = session.find_elements(:css, "pre#pre")
+
+      break unless result.empty?
+
+      sleep 1
+    end
+
+    puts "---------------alibaba---------------\n#{result.first.text}"
   end
 
   at_exit do
