@@ -3,158 +3,168 @@ require "selenium"
 require "webdrivers"
 require "./bing_translater/*"
 
-target_language : String? = nil
-browser = "firefox"
-debug_mode = false
-stdin = [] of String
-content = ""
+module BingTranslater
+  target_language : String? = nil
+  debug_mode = false
+  content = ""
+  browser = "firefox"
+  engine = "youdao"
 
-if STDIN.info.type.pipe?
-  while (input = STDIN.gets)
-    stdin << input
+  stdin = [] of String
+  if STDIN.info.type.pipe?
+    while (input = STDIN.gets)
+      stdin << input
+    end
+    content = stdin.join("\n").strip
+  else
+    ARGV << "--help" if ARGV.empty?
   end
-  content = stdin.join("\n").strip
-else
-  ARGV << "--help" if ARGV.empty?
-end
 
-OptionParser.parse do |parser|
-  parser.banner = <<-USAGE
+  OptionParser.parse do |parser|
+    parser.banner = <<-USAGE
 Usage: bing_translater <option> content
 USAGE
 
-  parser.on(
-    "-t TARGET",
-    "--target=TARGET",
-    "Specify target language, support zh-CN|en for now.
+    parser.on(
+      "-t TARGET",
+      "--target=TARGET",
+      "Specify target language, support zh-CN|en for now.
 default is translate English to Chinese.
 Youdao don't support this option.
 "
-  ) do |target|
-    case target
-    when "zh-CN"
-      target_language = "Chinese"
-    when "en"
+    ) do |target|
+      case target
+      when "zh-CN"
+        target_language = "Chinese"
+      when "en"
+        target_language = "English"
+      else
+        STDERR.puts "Supported options: -t zh-CN|en"
+        exit
+      end
+    end
+
+    parser.on(
+      "-b BROWSER",
+      "--browser=BROWSER",
+      "Specify browser used for scrap, only support firefox for now, default is firefox.
+") do |b|
+      case b.downcase
+      when "firefox"
+        browser = "firefox"
+      else
+        STDERR.puts "Supported options: -b firefox"
+        exit
+      end
+    end
+
+    parser.on(
+      "-e ENGINE",
+      "--engine=ENGINE",
+      "Specify engine used for translate, support bing|youdao for now.
+") do |e|
+      case e.downcase
+      when "bing"
+        engine = "bing"
+      when "youdao"
+        engine = "youdao"
+      else
+        STDERR.puts "Supported options: -e bing|youado"
+        exit
+      end
+    end
+
+    parser.unknown_args do |args|
+      if args.empty?
+        STDERR.puts "Please specify translate content. e.g. bing_translater 'hello, China!'"
+        exit
+      else
+        if args.first.blank?
+          STDERR.puts "Translate content must be present. e.g. bing_translater 'hello, China!'"
+          exit
+        end
+
+        content = args.first.strip
+      end
+    end
+
+    parser.on("-D", "--debug", "Debug mode") do
+      debug_mode = true
+    end
+
+    parser.on("-h", "--help", "Show this help message and exit") do
+      STDERR.puts parser
+      exit
+    end
+
+    parser.on("-v", "--version", "Show version") do
+      STDERR.puts BingTranslater::VERSION
+      exit
+    end
+
+    parser.invalid_option do |flag|
+      STDERR.puts "Invalid option: #{flag}.\n\n"
+      STDERR.puts parser
+      exit 1
+    end
+
+    parser.missing_option do |flag|
+      STDERR.puts "Missing option for #{flag}\n\n"
+      STDERR.puts parser
+      exit 1
+    end
+  end
+
+  if target_language.nil?
+    if content =~ /\p{Han}/
       target_language = "English"
     else
-      STDERR.puts "Supported options: -t zh-CN|en"
-      exit
+      target_language = "Chinese"
     end
   end
 
-  parser.on(
-    "-e ENGINE",
-    "--target=ENGINE",
-    "Specify engine, only support firefox for now, default is firefox.
-") do |engine|
-    case engine
-    when "firefox"
-      browser = "firefox"
-    when "chrome"
-      browser = "chrome"
-    else
-      STDERR.puts "Supported options: -e firefox"
-      exit
-    end
-  end
+  if content != "--help"
+    begin
+      case browser
+      when "firefox"
+        driver_path = Webdrivers::Geckodriver.install
+        service = Selenium::Service.firefox(driver_path: File.expand_path(driver_path, home: true))
+        driver = Selenium::Driver.for(:firefox, service: service)
+        options = Selenium::Firefox::Capabilities::FirefoxOptions.new
+        options.args = ["--headless"] unless debug_mode == true
 
-  parser.unknown_args do |args|
-    if args.empty?
-      STDERR.puts "Please specify translate content. e.g. bing_translater 'hello, China!'"
-      exit
-    else
-      if args.first.blank?
-        STDERR.puts "Translate content must be present. e.g. bing_translater 'hello, China!'"
+        capabilities = Selenium::Firefox::Capabilities.new
+        capabilities.firefox_options = options
+      when "chrome"
+        driver_path = Webdrivers::Chromedriver.install
+        service = Selenium::Service.chrome(driver_path: File.expand_path(driver_path, home: true))
+        driver = Selenium::Driver.for(:chrome, service: service)
+
+        options = Selenium::Chrome::Capabilities::ChromeOptions.new
+        options.args = ["headless"] unless debug_mode == true
+
+        capabilities = Selenium::Chrome::Capabilities.new
+        capabilities.chrome_options = options
+      else
+        STDERR.puts "Only support firefox for now, firefox is default."
         exit
       end
 
-      content = args.first.strip
-    end
-  end
+      session = driver.create_session(capabilities)
 
-  parser.on("-D", "--debug", "Debug mode") do
-    debug_mode = true
-  end
+      # Clean Cookies
+      cookie_manager = Selenium::CookieManager.new(command_handler: session.command_handler, session_id: session.id)
+      cookie_manager.delete_all_cookies
 
-  parser.on("-h", "--help", "Show this help message and exit") do
-    STDERR.puts parser
-    exit
-  end
-
-  parser.on("-v", "--version", "Show version") do
-    STDERR.puts BingTranslater::VERSION
-    exit
-  end
-
-  parser.invalid_option do |flag|
-    STDERR.puts "Invalid option: #{flag}.\n\n"
-    STDERR.puts parser
-    exit 1
-  end
-
-  parser.missing_option do |flag|
-    STDERR.puts "Missing option for #{flag}\n\n"
-    STDERR.puts parser
-    exit 1
-  end
-end
-
-if target_language.nil?
-  if content =~ /\p{Han}/
-    target_language = "English"
-  else
-    target_language = "Chinese"
-  end
-end
-
-if content != "--help"
-  begin
-    case browser
-    when "firefox"
-      driver_path = Webdrivers::Geckodriver.install
-      service = Selenium::Service.firefox(driver_path: File.expand_path(driver_path, home: true))
-      driver = Selenium::Driver.for(:firefox, service: service)
-      options = Selenium::Firefox::Capabilities::FirefoxOptions.new
-      options.args = ["--headless"] unless debug_mode == true
-
-      capabilities = Selenium::Firefox::Capabilities.new
-      capabilities.firefox_options = options
-    when "chrome"
-      driver_path = Webdrivers::Chromedriver.install
-      service = Selenium::Service.chrome(driver_path: File.expand_path(driver_path, home: true))
-      driver = Selenium::Driver.for(:chrome, service: service)
-
-      options = Selenium::Chrome::Capabilities::ChromeOptions.new
-      options.args = ["headless"] unless debug_mode == true
-
-      capabilities = Selenium::Chrome::Capabilities.new
-      capabilities.chrome_options = options
-    else
-      STDERR.puts "Only support firefox for now, firefox is default."
+      BingTranslater.bing_translater(session, content, debug_mode, target_language)
+      BingTranslater.youdao_translater(session, content, debug_mode)
+    rescue e : Selenium::Error
+      STDERR.puts e.message
       exit
     end
-
-    session = driver.create_session(capabilities)
-
-    # Clean Cookies
-    cookie_manager = Selenium::CookieManager.new(command_handler: session.command_handler, session_id: session.id)
-    cookie_manager.delete_all_cookies
-
-    BingTranslater.bing_translater(session, content, target_language, debug_mode)
-    BingTranslater.youdao_translater(session, content, debug_mode)
-  rescue e : Selenium::Error
-    STDERR.puts e.message
-    exit
   end
-end
 
-at_exit do
-  session.delete unless session.nil?
-  driver.stop unless driver.nil?
-end
-
-module BingTranslater
-  def self.bing_translater(session, content, target_language, debug_mode)
+  def self.bing_translater(session, content, debug_mode, target_language)
     session.navigate_to("https://www.bing.com/translator")
 
     while session.find_elements(:css, "select#tta_tgtsl optgroup#t_tgtRecentLang option").empty?
@@ -182,13 +192,16 @@ module BingTranslater
     document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
 
     case target_language
-    when "Chinese"
-      document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "zh-Hans"})
     when "English"
       document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "en"})
+    when "Chinese"
+      document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "zh-Hans"})
     end
 
-    gets if debug_mode
+    if debug_mode
+      STDERR.puts "Press any key to continue ..."
+      gets
+    end
 
     result = ""
 
@@ -228,7 +241,10 @@ module BingTranslater
       end
     end
 
-    gets if debug_mode
+    if debug_mode
+      STDERR.puts "Press any key to continue ..."
+      gets
+    end
 
     result = [] of Selenium::Element
 
@@ -241,5 +257,10 @@ module BingTranslater
     end
 
     puts "---------------Youdao---------------\n#{result.first.text}"
+  end
+
+  at_exit do
+    session.delete unless session.nil?
+    driver.stop unless driver.nil?
   end
 end
