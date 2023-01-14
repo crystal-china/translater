@@ -28,6 +28,7 @@ USAGE
     "--target=TARGET",
     "Specify target language, support zh-CN|en for now.
 default is translate English to Chinese.
+Youdao don't support this option.
 "
   ) do |target|
     case target
@@ -106,15 +107,8 @@ if target_language.nil?
   end
 end
 
-BingTranslater.translate(
-  target_language: target_language,
-  content: content,
-  debug_mode: debug_mode,
-  browser: browser
-) if content != "--help"
-
-module BingTranslater
-  def self.translate(target_language, content, debug_mode, browser)
+if content != "--help"
+  begin
     case browser
     when "firefox"
       driver_path = Webdrivers::Geckodriver.install
@@ -142,6 +136,25 @@ module BingTranslater
 
     session = driver.create_session(capabilities)
 
+    # Clean Cookies
+    cookie_manager = Selenium::CookieManager.new(command_handler: session.command_handler, session_id: session.id)
+    cookie_manager.delete_all_cookies
+
+    BingTranslater.bing_translater(session, content, target_language, debug_mode)
+    BingTranslater.youdao_translater(session, content, debug_mode)
+  rescue e : Selenium::Error
+    STDERR.puts e.message
+    exit
+  end
+end
+
+at_exit do
+  session.delete unless session.nil?
+  driver.stop unless driver.nil?
+end
+
+module BingTranslater
+  def self.bing_translater(session, content, target_language, debug_mode)
     session.navigate_to("https://www.bing.com/translator")
 
     while session.find_elements(:css, "select#tta_tgtsl optgroup#t_tgtRecentLang option").empty?
@@ -166,17 +179,13 @@ module BingTranslater
       end
     end
 
-    # Clean Cookies
-    cookie_manager = Selenium::CookieManager.new(command_handler: session.command_handler, session_id: session.id)
-    cookie_manager.delete_all_cookies
-
-    x = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
+    document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
 
     case target_language
     when "Chinese"
-      x.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "zh-Hans"})
+      document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "zh-Hans"})
     when "English"
-      x.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "en"})
+      document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "en"})
     end
 
     gets if debug_mode
@@ -184,19 +193,53 @@ module BingTranslater
     result = ""
 
     loop do
-      result = x.execute_script(%{return document.querySelector("textarea#tta_output_ta").value})
+      result = document_manager.execute_script(%{return document.querySelector("textarea#tta_output_ta").value})
 
       break unless result.strip == "..."
 
       sleep 0.1
     end
 
-    STDERR.puts result
-  rescue e : Selenium::Error
-    STDERR.puts e.message
-    exit
-  ensure
-    session.delete unless session.nil?
-    driver.stop unless driver.nil?
+    puts "---------------Bing---------------\n#{result}"
+  end
+
+  def self.youdao_translater(session, content, debug_mode)
+    session.navigate_to("https://fanyi.youdao.com/index.html")
+
+    while (elements = session.find_elements(:css, "#js_fanyi_input"); elements.empty?)
+      sleep 0.2
+    end
+
+    source_content_ele = elements.first
+
+    if content.size > 10
+      content1 = content[0..-10]
+      content2 = content[-9..-1]
+
+      source_content_ele.send_keys(key: content1)
+      content2.each_char do |e|
+        source_content_ele.send_keys(key: e.to_s)
+        sleep 0.01
+      end
+    else
+      content.each_char do |e|
+        source_content_ele.send_keys(key: e.to_s)
+        sleep 0.01
+      end
+    end
+
+    gets if debug_mode
+
+    result = [] of Selenium::Element
+
+    loop do
+      result = session.find_elements(:css, "#js_fanyi_output_resultOutput")
+
+      break unless result.empty?
+
+      sleep 1
+    end
+
+    puts "---------------Youdao---------------\n#{result.first.text}"
   end
 end
