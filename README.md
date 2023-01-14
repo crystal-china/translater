@@ -1,4 +1,4 @@
-# bing_translater
+# translater
 
 由于众所周知的原因，谷歌翻译中国境内用不了。
 
@@ -7,14 +7,14 @@
 
 ## Installation
 
-从 [release](https://github.com/crystal-china/bing_translater/releases) 下载最新版，扔到加入你的 $PATH 的文件夹里，直接使用
+从 [release](https://github.com/crystal-china/translater/releases) 下载最新版，扔到加入你的 $PATH 的文件夹里，直接使用
 
 ## Usage
 
 ```sh
- ╰─ $ bing_translater "Hello China!"
+ ╰─ $ translater "Hello China!"
 你好中国！
-╰─ $ bing_translater -t en "你好，中国！"
+╰─ $ translater -t en "你好，中国！"
 Hello, China!
 ```
 
@@ -27,7 +27,7 @@ bing 翻译针对单个 IP 单位时间内会有限制，具体位置，你只�
 
 ## Contributing
 
-1. Fork it (<https://github.com/zw963/bing_translater/fork>)
+1. Fork it (<https://github.com/zw963/translater/fork>)
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)

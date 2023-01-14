@@ -1,12 +1,12 @@
-name: bing_translater
+name: translater
 version: 0.1.0
 
 authors:
   - Billy.Zheng <vil963@gmail.com>
 
 targets:
-  bing_translater:
-    main: src/bing_translater.cr
+  translater:
+    main: src/translater.cr
 
 dependencies:
   selenium:

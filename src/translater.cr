@@ -1,9 +1,9 @@
 require "option_parser"
 require "selenium"
 require "webdrivers"
-require "./bing_translater/*"
+require "./translater/*"
 
-module BingTranslater
+module Translater
   target_language : String? = nil
   debug_mode = false
   content = ""
@@ -22,7 +22,7 @@ module BingTranslater
 
   OptionParser.parse do |parser|
     parser.banner = <<-USAGE
-Usage: bing_translater <option> content
+Usage: translater <option> content
 USAGE
 
     parser.on(
@@ -61,7 +61,7 @@ Youdao don't support this option.
     parser.on(
       "-e ENGINE",
       "--engine=ENGINE",
-      "Specify engine used for translate, support bing|youdao|tencent for now.
+      "Specify engine used for translate, support youdao|tencent|ali|bing.
 ") do |e|
       case e.downcase
       when "bing"
@@ -70,21 +70,21 @@ Youdao don't support this option.
         engine = "youdao"
       when "tencent"
         engine = "tencent"
-      when "alibaba"
+      when /ali/
         engine = "alibaba"
       else
-        STDERR.puts "Supported options: -e bing|youado|tencent|alibaba"
+        STDERR.puts "Supported options: -e youado|tencent|ali|bing"
         exit
       end
     end
 
     parser.unknown_args do |args|
       if args.empty?
-        STDERR.puts "Please specify translate content. e.g. bing_translater 'hello, China!'"
+        STDERR.puts "Please specify translate content. e.g. translater 'hello, China!'"
         exit
       else
         if args.first.blank?
-          STDERR.puts "Translate content must be present. e.g. bing_translater 'hello, China!'"
+          STDERR.puts "Translate content must be present. e.g. translater 'hello, China!'"
           exit
         end
 
@@ -102,7 +102,7 @@ Youdao don't support this option.
     end
 
     parser.on("-v", "--version", "Show version") do
-      STDERR.puts BingTranslater::VERSION
+      STDERR.puts Translater::VERSION
       exit
     end
 
@@ -170,10 +170,10 @@ Youdao don't support this option.
       cookie_manager = Selenium::CookieManager.new(command_handler: session.command_handler, session_id: session.id)
       cookie_manager.delete_all_cookies
 
-      BingTranslater.bing_translater(session, content, debug_mode, target_language) if engine == "bing"
-      BingTranslater.youdao_translater(session, content, debug_mode) if engine == "youdao"
-      BingTranslater.tencent_translater(session, content, debug_mode) if engine == "tencent"
-      BingTranslater.alibaba_translater(session, content, debug_mode) if engine == "alibaba"
+      Translater.bing_translater(session, content, debug_mode, target_language) if engine == "bing"
+      Translater.youdao_translater(session, content, debug_mode) if engine == "youdao"
+      Translater.tencent_translater(session, content, debug_mode) if engine == "tencent"
+      Translater.alibaba_translater(session, content, debug_mode) if engine == "alibaba"
     rescue e : Selenium::Error
       STDERR.puts e.message
       exit
