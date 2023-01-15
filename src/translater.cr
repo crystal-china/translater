@@ -8,7 +8,7 @@ module Translater
   debug_mode = false
   content = ""
   browser = "firefox"
-  engine = "youdao"
+  engine_list = ["youdao"]
 
   stdin = [] of String
   if STDIN.info.type.pipe?
@@ -61,20 +61,26 @@ Youdao don't support this option.
     parser.on(
       "-e ENGINE",
       "--engine=ENGINE",
-      "Specify engine used for translate, support youdao|tencent|ali|bing.
+      "Specify engine used for translate, support youdao,tencent,ali,bing.
+multi-engine is supported, split with comma, e.g. -e youdao,tencent
 ") do |e|
-      case e.downcase
-      when "bing"
-        engine = "bing"
-      when "youdao"
-        engine = "youdao"
-      when "tencent"
-        engine = "tencent"
-      when /ali/
-        engine = "alibaba"
-      else
-        STDERR.puts "Supported options: -e youado|tencent|ali|bing"
-        exit
+      inputs = e.split(",")
+      engine_list = [] of String
+
+      inputs.each do |input|
+        case input.downcase
+        when "bing"
+          engine_list << "bing"
+        when "youdao"
+          engine_list << "youdao"
+        when "tencent"
+          engine_list << "tencent"
+        when /ali/
+          engine_list << "alibaba"
+        else
+          STDERR.puts "Supported options: youdao,tencent,ali,bing"
+          exit
+        end
       end
     end
 
@@ -170,10 +176,10 @@ Youdao don't support this option.
       cookie_manager = Selenium::CookieManager.new(command_handler: session.command_handler, session_id: session.id)
       cookie_manager.delete_all_cookies
 
-      Translater.bing_translater(session, content, debug_mode, target_language) if engine == "bing"
-      Translater.youdao_translater(session, content, debug_mode) if engine == "youdao"
-      Translater.tencent_translater(session, content, debug_mode) if engine == "tencent"
-      Translater.alibaba_translater(session, content, debug_mode) if engine == "alibaba"
+      Translater.bing_translater(session, content, debug_mode, target_language) if engine_list.includes? "bing"
+      Translater.youdao_translater(session, content, debug_mode) if engine_list.includes? "youdao"
+      Translater.tencent_translater(session, content, debug_mode) if engine_list.includes? "tencent"
+      Translater.alibaba_translater(session, content, debug_mode) if engine_list.includes? "alibaba"
     rescue e : Selenium::Error
       STDERR.puts e.message
       exit
@@ -269,7 +275,7 @@ Youdao don't support this option.
 
       break unless result.empty?
 
-      sleep 1
+      sleep 0.1
     end
 
     puts "---------------Youdao---------------\n#{result.first.text}"
@@ -312,7 +318,7 @@ Youdao don't support this option.
 
       break unless result.empty?
 
-      sleep 1
+      sleep 0.1
     end
 
     puts "---------------Tencent---------------\n#{result.first.text}"
@@ -355,7 +361,7 @@ Youdao don't support this option.
 
       break unless result.empty?
 
-      sleep 1
+      sleep 0.1
     end
 
     puts "---------------alibaba---------------\n#{result.first.text}"
