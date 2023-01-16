@@ -210,6 +210,7 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
     end
 
     source_content_ele = session.find_element(:css, "textarea#tta_input_ta")
+    source_content_ele.click
 
     if content.size > 10
       content1 = content[0..-10]
@@ -258,6 +259,7 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
     end
 
     source_content_ele = elements.first
+    source_content_ele.click
 
     if content.size > 10
       content1 = content[0..-10]
@@ -303,6 +305,7 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
     end
 
     source_content_ele = elements.first
+    source_content_ele.click
 
     if content.size > 10
       content1 = content[0..-10]
@@ -348,6 +351,7 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
     end
 
     source_content_ele = elements.first
+    source_content_ele.click
 
     if content.size > 10
       content1 = content[0..-10]
@@ -393,6 +397,7 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
     end
 
     source_content_ele = elements.first
+    source_content_ele.click
 
     if content.size > 10
       content1 = content[0..-10]
