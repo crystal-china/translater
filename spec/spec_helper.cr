@@ -1,2 +1,2 @@
 require "spec"
-require "../src/translater"
+# require "../src/translater"

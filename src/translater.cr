@@ -8,6 +8,7 @@ enum Engine
   Youdao
   Tencent
   Ali
+  Baidu
 end
 
 enum TargetLanguage
@@ -41,21 +42,21 @@ module Translater
 Usage: translater <option> content
 USAGE
 
-    parser.on(
-      "-t TARGET",
-      "--target=TARGET",
-      "Specify target language, support zh-CN|en for now.
-default is translate English to Chinese.
-Youdao don't support this option.
-"
-    ) do |target|
-      target_language = TargetLanguage.parse?(target)
+    # parser.on(
+    #       "-t TARGET",
+    #       "--target=TARGET",
+    #       "Specify target language, support zh-CN|en for now.
+    # default is translate English to Chinese.
+    # Youdao don't support this option.
+    # "
+    #     ) do |target|
+    #       target_language = TargetLanguage.parse?(target)
 
-      if target_language.nil?
-        STDERR.puts "Supported options: #{TargetLanguage.names.map(&.downcase).join ", "}"
-        exit 1
-      end
-    end
+    #       if target_language.nil?
+    #         STDERR.puts "Supported options: #{TargetLanguage.names.map(&.downcase).join ", "}"
+    #         exit 1
+    #       end
+    #     end
 
     parser.on(
       "-b BROWSER",
@@ -73,7 +74,7 @@ Youdao don't support this option.
     parser.on(
       "-e ENGINE",
       "--engine=ENGINE",
-      "Specify engine used for translate, support youdao,tencent,ali,bing.
+      "Specify engine used for translate, support youdao,tencent,ali,baidu,bing.
 multi-engine is supported, split with comma, e.g. -e youdao,tencent
 ") do |e|
       inputs = e.split(",")
@@ -185,6 +186,7 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
       youdao_translater(session, content, debug_mode) if engine_list.includes? Engine::Youdao
       tencent_translater(session, content, debug_mode) if engine_list.includes? Engine::Tencent
       alibaba_translater(session, content, debug_mode) if engine_list.includes? Engine::Ali
+      baidu_translater(session, content, debug_mode) if engine_list.includes? Engine::Baidu
     rescue e : Selenium::Error
       STDERR.puts e.message
       exit
@@ -230,11 +232,7 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
       gets
     end
 
-    result = ""
-
-    loop do
-      result = document_manager.execute_script(%{return document.querySelector("textarea#tta_output_ta").value})
-
+    while result = document_manager.execute_script(%{return document.querySelector("textarea#tta_output_ta").value})
       break unless result.strip == "..."
 
       sleep 0.1
@@ -273,17 +271,19 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
       gets
     end
 
-    result = [] of Selenium::Element
-
-    loop do
-      result = session.find_elements(:css, "#js_fanyi_output_resultOutput")
-
-      break unless result.empty?
+    while results = session.find_elements(:css, "#js_fanyi_output_resultOutput")
+      break unless results.empty?
 
       sleep 0.1
     end
 
-    puts "---------------Youdao---------------\n#{result.first.text}"
+    while result = results.first
+      break unless result.text.blank?
+
+      sleep 0.1
+    end
+
+    puts "---------------Youdao---------------\n#{result.text}"
   end
 
   def self.tencent_translater(session, content, debug_mode)
@@ -316,17 +316,19 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
       gets
     end
 
-    result = [] of Selenium::Element
-
-    loop do
-      result = session.find_elements(:css, ".textpanel-target-textblock span.text-dst")
-
-      break unless result.empty?
+    while results = session.find_elements(:css, ".textpanel-target-textblock span.text-dst")
+      break unless results.empty?
 
       sleep 0.1
     end
 
-    puts "---------------Tencent---------------\n#{result.first.text}"
+    while result = results.first
+      break unless result.text.blank?
+
+      sleep 0.1
+    end
+
+    puts "---------------Tencent---------------\n#{result.text}"
   end
 
   def self.alibaba_translater(session, content, debug_mode)
@@ -359,17 +361,64 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
       gets
     end
 
-    result = [] of Selenium::Element
-
-    loop do
-      result = session.find_elements(:css, "pre#pre")
-
-      break unless result.empty?
+    while results = session.find_elements(:css, "pre#pre")
+      break unless results.empty?
 
       sleep 0.1
     end
 
-    puts "---------------alibaba---------------\n#{result.first.text}"
+    while result = results.first
+      break unless result.text.blank?
+
+      sleep 0.1
+    end
+
+    puts "---------------alibaba---------------\n#{result.text}"
+  end
+
+  def self.baidu_translater(session, content, debug_mode)
+    session.navigate_to("https://fanyi.baidu.com/")
+
+    while (elements = session.find_elements(:css, "textarea#baidu_translate_input"); elements.empty?)
+      sleep 0.2
+    end
+
+    source_content_ele = elements.first
+
+    if content.size > 10
+      content1 = content[0..-10]
+      content2 = content[-9..-1]
+
+      source_content_ele.send_keys(key: content1)
+      content2.each_char do |e|
+        source_content_ele.send_keys(key: e.to_s)
+        sleep 0.01
+      end
+    else
+      content.each_char do |e|
+        source_content_ele.send_keys(key: e.to_s)
+        sleep 0.01
+      end
+    end
+
+    if debug_mode
+      STDERR.puts "Press any key to continue ..."
+      gets
+    end
+
+    while results = session.find_elements(:css, "p.target-output span")
+      break unless results.empty?
+
+      sleep 0.1
+    end
+
+    while result = results.first
+      break unless result.text.blank?
+
+      sleep 0.1
+    end
+
+    puts "---------------baidu---------------\n#{result.text}"
   end
 
   at_exit do
