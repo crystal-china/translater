@@ -3,12 +3,28 @@ require "selenium"
 require "webdrivers"
 require "./translater/*"
 
+enum Engine
+  Bing
+  Youdao
+  Tencent
+  Ali
+end
+
+enum TargetLanguage
+  Chinese
+  English
+end
+
+enum Browser
+  Firefox
+end
+
 module Translater
-  target_language : String? = nil
+  target_language : TargetLanguage? = nil
   debug_mode = false
   content = ""
-  browser = "firefox"
-  engine_list = ["youdao"]
+  browser = Browser::Firefox
+  engine_list = [Engine::Youdao]
 
   stdin = [] of String
   if STDIN.info.type.pipe?
@@ -33,14 +49,11 @@ default is translate English to Chinese.
 Youdao don't support this option.
 "
     ) do |target|
-      case target
-      when "zh-CN"
-        target_language = "Chinese"
-      when "en"
-        target_language = "English"
-      else
-        STDERR.puts "Supported options: -t zh-CN|en"
-        exit
+      target_language = TargetLanguage.parse?(target)
+
+      if target_language.nil?
+        STDERR.puts "Supported options: #{TargetLanguage.names.map(&.downcase).join ", "}"
+        exit 1
       end
     end
 
@@ -49,12 +62,11 @@ Youdao don't support this option.
       "--browser=BROWSER",
       "Specify browser used for scrap, only support firefox for now, default is firefox.
 ") do |b|
-      case b.downcase
-      when "firefox"
-        browser = "firefox"
-      else
-        STDERR.puts "Supported options: -b firefox"
-        exit
+      browser = Browser.parse?(b)
+
+      if browser.nil?
+        STDERR.puts "Supported options: #{Browser.names.map(&.downcase).join ", "}"
+        exit 1
       end
     end
 
@@ -65,21 +77,14 @@ Youdao don't support this option.
 multi-engine is supported, split with comma, e.g. -e youdao,tencent
 ") do |e|
       inputs = e.split(",")
-      engine_list = [] of String
+      engine_list = [] of Engine
 
       inputs.each do |input|
-        case input.downcase
-        when "bing"
-          engine_list << "bing"
-        when "youdao"
-          engine_list << "youdao"
-        when "tencent"
-          engine_list << "tencent"
-        when /ali/
-          engine_list << "alibaba"
+        if (engine = Engine.parse?(input))
+          engine_list << engine
         else
-          STDERR.puts "Supported options: youdao,tencent,ali,bing"
-          exit
+          STDERR.puts "Supported options: #{Engine.names.map(&.downcase).join ", "}"
+          exit 1
         end
       end
     end
@@ -127,16 +132,16 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
 
   if target_language.nil?
     if content =~ /\p{Han}/
-      target_language = "English"
+      target_language = TargetLanguage::English
     else
-      target_language = "Chinese"
+      target_language = TargetLanguage::Chinese
     end
   end
 
   if content != "--help"
     begin
       case browser
-      when "firefox"
+      when Browser::Firefox
         if Webdrivers::Geckodriver.driver_version
           driver_path = Webdrivers::Geckodriver.driver_path
         else
@@ -150,21 +155,21 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
 
         capabilities = Selenium::Firefox::Capabilities.new
         capabilities.firefox_options = options
-      when "chrome"
-        if Webdrivers::Chromedriver.driver_version
-          driver_path = Webdrivers::Chromedriver.driver_path
-        else
-          driver_path = Webdrivers::Chromedriver.install
-        end
+        # when "chrome"
+        #   if Webdrivers::Chromedriver.driver_version
+        #     driver_path = Webdrivers::Chromedriver.driver_path
+        #   else
+        #     driver_path = Webdrivers::Chromedriver.install
+        #   end
 
-        service = Selenium::Service.chrome(driver_path: File.expand_path(driver_path, home: true))
-        driver = Selenium::Driver.for(:chrome, service: service)
+        #   service = Selenium::Service.chrome(driver_path: File.expand_path(driver_path, home: true))
+        #   driver = Selenium::Driver.for(:chrome, service: service)
 
-        options = Selenium::Chrome::Capabilities::ChromeOptions.new
-        options.args = ["headless"] unless debug_mode == true
+        #   options = Selenium::Chrome::Capabilities::ChromeOptions.new
+        #   options.args = ["headless"] unless debug_mode == true
 
-        capabilities = Selenium::Chrome::Capabilities.new
-        capabilities.chrome_options = options
+        #   capabilities = Selenium::Chrome::Capabilities.new
+        #   capabilities.chrome_options = options
       else
         STDERR.puts "Only support firefox for now, firefox is default."
         exit
@@ -176,10 +181,10 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
       cookie_manager = Selenium::CookieManager.new(command_handler: session.command_handler, session_id: session.id)
       cookie_manager.delete_all_cookies
 
-      Translater.bing_translater(session, content, debug_mode, target_language) if engine_list.includes? "bing"
-      Translater.youdao_translater(session, content, debug_mode) if engine_list.includes? "youdao"
-      Translater.tencent_translater(session, content, debug_mode) if engine_list.includes? "tencent"
-      Translater.alibaba_translater(session, content, debug_mode) if engine_list.includes? "alibaba"
+      bing_translater(session, content, debug_mode, target_language) if engine_list.includes? Engine::Bing
+      youdao_translater(session, content, debug_mode) if engine_list.includes? Engine::Youdao
+      tencent_translater(session, content, debug_mode) if engine_list.includes? Engine::Tencent
+      alibaba_translater(session, content, debug_mode) if engine_list.includes? Engine::Ali
     rescue e : Selenium::Error
       STDERR.puts e.message
       exit
@@ -214,9 +219,9 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
     document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
 
     case target_language
-    when "English"
+    when TargetLanguage::English
       document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "en"})
-    when "Chinese"
+    when TargetLanguage::Chinese
       document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "zh-Hans"})
     end
 
