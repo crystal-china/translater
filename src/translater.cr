@@ -310,7 +310,7 @@ end
     end
 
     source_content_ele = elements.first
-    source_content_ele.click
+    # source_content_ele.click
 
     if content.size > 10
       content1 = content[0..-10]
