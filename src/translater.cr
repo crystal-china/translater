@@ -304,13 +304,24 @@ end
 
   def self.tencent_translater(session, content, debug_mode)
     session.navigate_to("https://fanyi.qq.com/")
+    document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
 
-    while (elements = session.find_elements(:css, ".textpanel-source-textarea textarea"); elements.empty?)
+    while (elements = session.find_elements(:css, ".textpanel-source.active .textpanel-source-textarea textarea.textinput"); elements.empty?)
       sleep 0.2
     end
 
     source_content_ele = elements.first
-    # source_content_ele.click
+
+    while !source_content_ele.displayed?
+      sleep 0.2
+    end
+
+    # document_manager.execute_script("arguments[0].click();", elements)
+    source_content_ele.click
+
+    while !source_content_ele.selected?
+      sleep 0.2
+    end
 
     if content.size > 10
       content1 = content[0..-10]
@@ -319,12 +330,12 @@ end
       source_content_ele.send_keys(key: content1)
       content2.each_char do |e|
         source_content_ele.send_keys(key: e.to_s)
-        sleep 0.01
+        sleep 0.05
       end
     else
       content.each_char do |e|
         source_content_ele.send_keys(key: e.to_s)
-        sleep 0.01
+        sleep 0.05
       end
     end
 
@@ -397,10 +408,10 @@ end
   def self.baidu_translater(session, content, debug_mode)
     session.navigate_to("https://fanyi.baidu.com/")
 
-    while (elements = session.find_elements(:css, ".app-guide-inner"); !elements.empty?)
-      session.find_element(:css, "span.app-guide-close").click
-
-      sleep 0.2
+    if (elements = session.find_elements(:css, ".app-guide-inner"); !elements.empty?)
+      if (elements1 = session.find_elements(:css, "span.app-guide-close"); !elements1.empty?)
+        elements1.first.click
+      end
     end
 
     while (elements = session.find_elements(:css, "textarea#baidu_translate_input"); elements.empty?)
