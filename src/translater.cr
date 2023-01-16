@@ -185,11 +185,16 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
       chan = Channel(Nil).new
 
       spawn do
-        bing_translater(session, content, debug_mode, target_language) if engine_list.includes? Engine::Bing
-        youdao_translater(session, content, debug_mode) if engine_list.includes? Engine::Youdao
-        tencent_translater(session, content, debug_mode) if engine_list.includes? Engine::Tencent
-        alibaba_translater(session, content, debug_mode) if engine_list.includes? Engine::Ali
-        baidu_translater(session, content, debug_mode) if engine_list.includes? Engine::Baidu
+        begin
+          bing_translater(session, content, debug_mode, target_language) if engine_list.includes? Engine::Bing
+          youdao_translater(session, content, debug_mode) if engine_list.includes? Engine::Youdao
+          tencent_translater(session, content, debug_mode) if engine_list.includes? Engine::Tencent
+          alibaba_translater(session, content, debug_mode) if engine_list.includes? Engine::Ali
+          baidu_translater(session, content, debug_mode) if engine_list.includes? Engine::Baidu
+          # rescue e : Selenium::Error
+          #   STDERR.puts e.message
+          #   exit
+end
 
         chan.send(nil)
       end
@@ -391,6 +396,12 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
 
   def self.baidu_translater(session, content, debug_mode)
     session.navigate_to("https://fanyi.baidu.com/")
+
+    while (elements = session.find_elements(:css, ".app-guide-inner"); !elements.empty?)
+      session.find_element(:css, "span.app-guide-close").click
+
+      sleep 0.2
+    end
 
     while (elements = session.find_elements(:css, "textarea#baidu_translate_input"); elements.empty?)
       sleep 0.2
