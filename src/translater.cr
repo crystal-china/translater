@@ -182,14 +182,23 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
       cookie_manager = Selenium::CookieManager.new(command_handler: session.command_handler, session_id: session.id)
       cookie_manager.delete_all_cookies
 
-      bing_translater(session, content, debug_mode, target_language) if engine_list.includes? Engine::Bing
-      youdao_translater(session, content, debug_mode) if engine_list.includes? Engine::Youdao
-      tencent_translater(session, content, debug_mode) if engine_list.includes? Engine::Tencent
-      alibaba_translater(session, content, debug_mode) if engine_list.includes? Engine::Ali
-      baidu_translater(session, content, debug_mode) if engine_list.includes? Engine::Baidu
-    rescue e : Selenium::Error
-      STDERR.puts e.message
-      exit
+      chan = Channel(Nil).new
+
+      spawn do
+        bing_translater(session, content, debug_mode, target_language) if engine_list.includes? Engine::Bing
+        youdao_translater(session, content, debug_mode) if engine_list.includes? Engine::Youdao
+        tencent_translater(session, content, debug_mode) if engine_list.includes? Engine::Tencent
+        alibaba_translater(session, content, debug_mode) if engine_list.includes? Engine::Ali
+        baidu_translater(session, content, debug_mode) if engine_list.includes? Engine::Baidu
+
+        chan.send(nil)
+      end
+
+      select
+      when chan.receive
+      when timeout 20.seconds
+        STDERR.puts "Timeout!"
+      end
     end
   end
 
@@ -373,7 +382,7 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
       sleep 0.1
     end
 
-    puts "---------------alibaba---------------\n#{result.text}"
+    puts "---------------Alibaba---------------\n#{result.text}"
   end
 
   def self.baidu_translater(session, content, debug_mode)
@@ -418,7 +427,7 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
       sleep 0.1
     end
 
-    puts "---------------baidu---------------\n#{result.text}"
+    puts "---------------Baidu---------------\n#{result.text}"
   end
 
   at_exit do
