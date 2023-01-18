@@ -14,7 +14,9 @@ jobs:
       - name: Cache shards
         uses: actions/cache@v2
         with:
-          path: ~/.cache/shards
+          path:
+            - ~/.cache/shards
+            - /opt/firefox
           key: ${{ runner.os }}-shards-${{ hashFiles('shard.yml') }}
           restore-keys: ${{ runner.os }}-shards-
       - name: Download source
