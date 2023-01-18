@@ -4,7 +4,7 @@ require "webdrivers"
 require "./translater/*"
 
 enum Engine
-  Bing
+  # Bing
   Youdao
   Tencent
   Ali
@@ -25,7 +25,7 @@ module Translater
   debug_mode = false
   content = ""
   browser = Browser::Firefox
-  engine_list = [Engine::Youdao]
+  engine_list = Engine.values.shuffle![0..0]
 
   stdin = [] of String
   if STDIN.info.type.pipe?
@@ -63,11 +63,13 @@ USAGE
       "--browser=BROWSER",
       "Specify browser used for scrap, only support firefox for now, default is firefox.
 ") do |b|
-      browser = Browser.parse?(b)
+      value = Browser.parse?(b)
 
-      if browser.nil?
+      if value.nil?
         STDERR.puts "Supported options: #{Browser.names.map(&.downcase).join ", "}"
         exit 1
+      else
+        browser = value
       end
     end
 
@@ -142,7 +144,7 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
   if content != "--help"
     begin
       case browser
-      when Browser::Firefox
+      in Browser::Firefox
         if Webdrivers::Geckodriver.driver_version
           driver_path = Webdrivers::Geckodriver.driver_path
         else
@@ -171,9 +173,9 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
 
         #   capabilities = Selenium::Chrome::Capabilities.new
         #   capabilities.chrome_options = options
-      else
-        STDERR.puts "Only support firefox for now, firefox is default."
-        exit
+        # else
+        #   STDERR.puts "Only support firefox for now, firefox is default."
+        #   exit
       end
 
       session = driver.create_session(capabilities)
@@ -186,75 +188,77 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
 
       spawn do
         begin
-          bing_translater(session, content, debug_mode, target_language) if engine_list.includes? Engine::Bing
+          # bing_translater(session, content, debug_mode, target_language) if engine_list.includes? Engine::Bing
           youdao_translater(session, content, debug_mode) if engine_list.includes? Engine::Youdao
           tencent_translater(session, content, debug_mode) if engine_list.includes? Engine::Tencent
           alibaba_translater(session, content, debug_mode) if engine_list.includes? Engine::Ali
           baidu_translater(session, content, debug_mode) if engine_list.includes? Engine::Baidu
+
+          chan.send(nil)
           # rescue e : Selenium::Error
           #   STDERR.puts e.message
           #   exit
 end
-
-        chan.send(nil)
       end
 
       select
       when chan.receive
-      when timeout 20.seconds
-        STDERR.puts "Timeout!"
+      when timeout (engine_list.size * 10).seconds
+        STDERR.puts %{Timeout! engine: #{engine_list.join(", ")}}
       end
     end
   end
 
-  def self.bing_translater(session, content, debug_mode, target_language)
-    session.navigate_to("https://www.bing.com/translator")
+  # def self.bing_translater(session, content, debug_mode, target_language)
+  #   session.navigate_to("https://www.bing.com/translator")
 
-    while session.find_elements(:css, "select#tta_tgtsl optgroup#t_tgtRecentLang option").empty?
-      sleep 0.2
-    end
+  #   while session.find_elements(:css, "select#tta_tgtsl optgroup#t_tgtRecentLang option").empty?
+  #     sleep 0.2
+  #   end
 
-    source_content_ele = session.find_element(:css, "textarea#tta_input_ta")
-    source_content_ele.click
+  #   source_content_ele = session.find_element(:css, "textarea#tta_input_ta")
+  #   source_content_ele.click
 
-    if content.size > 10
-      content1 = content[0..-10]
-      content2 = content[-9..-1]
+  #   sleep 0.2
 
-      source_content_ele.send_keys(key: content1)
-      content2.each_char do |e|
-        source_content_ele.send_keys(key: e.to_s)
-        sleep 0.01
-      end
-    else
-      content.each_char do |e|
-        source_content_ele.send_keys(key: e.to_s)
-        sleep 0.01
-      end
-    end
+  #   if content.size > 10
+  #     content1 = content[0..-10]
+  #     content2 = content[-9..-1]
 
-    document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
+  #     source_content_ele.send_keys(key: content1)
+  #     content2.each_char do |e|
+  #       source_content_ele.send_keys(key: e.to_s)
+  #       sleep 0.05
+  #     end
+  #   else
+  #     content.each_char do |e|
+  #       source_content_ele.send_keys(key: e.to_s)
+  #       sleep 0.05
+  #     end
+  #   end
 
-    case target_language
-    when TargetLanguage::English
-      document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "en"})
-    when TargetLanguage::Chinese
-      document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "zh-Hans"})
-    end
+  #   document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
 
-    if debug_mode
-      STDERR.puts "Press any key to continue ..."
-      gets
-    end
+  #   case target_language
+  #   in TargetLanguage::English
+  #     document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "en"})
+  #   in TargetLanguage::Chinese
+  #     document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "zh-Hans"})
+  #   end
 
-    while result = document_manager.execute_script(%{return document.querySelector("textarea#tta_output_ta").value})
-      break unless result.strip == "..."
+  #   if debug_mode
+  #     STDERR.puts "Press any key to continue ..."
+  #     gets
+  #   end
 
-      sleep 0.1
-    end
+  #   while result = document_manager.execute_script(%{return document.querySelector("textarea#tta_output_ta").value})
+  #     break unless result.strip == "..."
 
-    puts "---------------Bing---------------\n#{result}"
-  end
+  #     sleep 0.2
+  #   end
+
+  #   puts "---------------Bing---------------\n#{result}"
+  # end
 
   def self.youdao_translater(session, content, debug_mode)
     session.navigate_to("https://fanyi.youdao.com/index.html")
@@ -266,6 +270,8 @@ end
     source_content_ele = elements.first
     source_content_ele.click
 
+    sleep 0.2
+
     if content.size > 10
       content1 = content[0..-10]
       content2 = content[-9..-1]
@@ -273,12 +279,12 @@ end
       source_content_ele.send_keys(key: content1)
       content2.each_char do |e|
         source_content_ele.send_keys(key: e.to_s)
-        sleep 0.01
+        sleep 0.05
       end
     else
       content.each_char do |e|
         source_content_ele.send_keys(key: e.to_s)
-        sleep 0.01
+        sleep 0.05
       end
     end
 
@@ -290,13 +296,13 @@ end
     while results = session.find_elements(:css, "#js_fanyi_output_resultOutput")
       break unless results.empty?
 
-      sleep 0.1
+      sleep 0.2
     end
 
     while result = results.first
       break unless result.text.blank?
 
-      sleep 0.1
+      sleep 0.2
     end
 
     puts "---------------Youdao---------------\n#{result.text}"
@@ -304,7 +310,6 @@ end
 
   def self.tencent_translater(session, content, debug_mode)
     session.navigate_to("https://fanyi.qq.com/")
-    document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
 
     while (elements = session.find_elements(:css, ".textpanel-source.active .textpanel-source-textarea textarea.textinput"); elements.empty?)
       sleep 0.2
@@ -316,12 +321,9 @@ end
       sleep 0.2
     end
 
-    # document_manager.execute_script("arguments[0].click();", elements)
     source_content_ele.click
 
-    while !source_content_ele.selected?
-      sleep 0.2
-    end
+    sleep 0.2
 
     if content.size > 10
       content1 = content[0..-10]
@@ -347,13 +349,13 @@ end
     while results = session.find_elements(:css, ".textpanel-target-textblock span.text-dst")
       break unless results.empty?
 
-      sleep 0.1
+      sleep 0.2
     end
 
     while result = results.first
       break unless result.text.blank?
 
-      sleep 0.1
+      sleep 0.2
     end
 
     puts "---------------Tencent---------------\n#{result.text}"
@@ -367,7 +369,14 @@ end
     end
 
     source_content_ele = elements.first
+
+    while !source_content_ele.displayed?
+      sleep 0.2
+    end
+
     source_content_ele.click
+
+    sleep 0.2
 
     if content.size > 10
       content1 = content[0..-10]
@@ -376,12 +385,12 @@ end
       source_content_ele.send_keys(key: content1)
       content2.each_char do |e|
         source_content_ele.send_keys(key: e.to_s)
-        sleep 0.01
+        sleep 0.05
       end
     else
       content.each_char do |e|
         source_content_ele.send_keys(key: e.to_s)
-        sleep 0.01
+        sleep 0.05
       end
     end
 
@@ -393,13 +402,13 @@ end
     while results = session.find_elements(:css, "pre#pre")
       break unless results.empty?
 
-      sleep 0.1
+      sleep 0.2
     end
 
     while result = results.first
       break unless result.text.blank?
 
-      sleep 0.1
+      sleep 0.2
     end
 
     puts "---------------Alibaba---------------\n#{result.text}"
@@ -408,10 +417,20 @@ end
   def self.baidu_translater(session, content, debug_mode)
     session.navigate_to("https://fanyi.baidu.com/")
 
-    if (elements = session.find_elements(:css, ".app-guide-inner"); !elements.empty?)
-      if (elements1 = session.find_elements(:css, "span.app-guide-close"); !elements1.empty?)
-        elements1.first.click
+    while (elements = session.find_elements(:css, "#app-guide"); !elements.empty?)
+      while (elements1 = session.find_elements(:css, "span.app-guide-close"); !elements1.empty?)
+        while (element = session.find_element(:css, "span.app-guide-close")).displayed?
+          element.click
+
+          sleep 0.2
+        end
+
+        sleep 0.2
       end
+
+      break if (elements = session.find_elements(:css, ".app-guide-hide"); !elements.empty?)
+
+      sleep 0.2
     end
 
     while (elements = session.find_elements(:css, "textarea#baidu_translate_input"); elements.empty?)
@@ -419,7 +438,14 @@ end
     end
 
     source_content_ele = elements.first
+
+    while !source_content_ele.displayed?
+      sleep 0.2
+    end
+
     source_content_ele.click
+
+    sleep 0.2
 
     if content.size > 10
       content1 = content[0..-10]
@@ -428,12 +454,12 @@ end
       source_content_ele.send_keys(key: content1)
       content2.each_char do |e|
         source_content_ele.send_keys(key: e.to_s)
-        sleep 0.01
+        sleep 0.05
       end
     else
       content.each_char do |e|
         source_content_ele.send_keys(key: e.to_s)
-        sleep 0.01
+        sleep 0.05
       end
     end
 
@@ -445,13 +471,13 @@ end
     while results = session.find_elements(:css, "p.target-output span")
       break unless results.empty?
 
-      sleep 0.1
+      sleep 0.2
     end
 
     while result = results.first
       break unless result.text.blank?
 
-      sleep 0.1
+      sleep 0.2
     end
 
     puts "---------------Baidu---------------\n#{result.text}"
