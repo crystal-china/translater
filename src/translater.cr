@@ -26,6 +26,7 @@ module Translater
   content = ""
   browser = Browser::Firefox
   engine_list = Engine.values.shuffle![0..0]
+  timeout_seconds = 10
 
   stdin = [] of String
 
@@ -93,6 +94,12 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
       end
     end
 
+    parser.on(
+      "--timeout=SECONDS",
+      "Specify timeout for get translate result, default is 10 seconds") do |seconds|
+      timeout_seconds = seconds
+    end
+
     parser.unknown_args do |args|
       if !STDIN.info.type.pipe?
         if args.empty?
@@ -111,6 +118,7 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
 
     parser.on("-D", "--debug", "Debug mode") do
       debug_mode = true
+      timeout_seconds = 100000 # disable timeout if debug mode
     end
 
     parser.on("-h", "--help", "Show this help message and exit") do
@@ -206,7 +214,7 @@ end
 
       select
       when chan.receive
-      when timeout (engine_list.size * 10).seconds
+      when timeout (engine_list.size * timeout_seconds).seconds
         STDERR.puts %{Timeout! engine: #{engine_list.join(", ")}}
       end
     end
