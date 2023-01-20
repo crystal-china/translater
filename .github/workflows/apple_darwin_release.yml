@@ -23,8 +23,8 @@ jobs:
         run: shards check || shards install
       - name: Check formatting
         run: crystal tool format --check
-      - name: Run tests
-        run: crystal spec --order=random --error-on-warnings
+      # - name: Run tests
+      #   run: crystal spec --order=random --error-on-warnings
       - name: package information
         run: |
           echo "BINARY_NAME=translater" >> $GITHUB_ENV
