@@ -28,6 +28,7 @@ module Translater
   engine_list = Engine.values.shuffle![0..0]
 
   stdin = [] of String
+
   if STDIN.info.type.pipe?
     while (input = STDIN.gets)
       stdin << input
@@ -93,16 +94,18 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
     end
 
     parser.unknown_args do |args|
-      if args.empty?
-        STDERR.puts "Please specify translate content. e.g. translater 'hello, China!'"
-        exit
-      else
-        if args.first.blank?
-          STDERR.puts "Translate content must be present. e.g. translater 'hello, China!'"
+      if !STDIN.info.type.pipe?
+        if args.empty?
+          STDERR.puts "Please specify translate content. e.g. translater 'hello, China!'"
           exit
-        end
+        else
+          if args.first.blank?
+            STDERR.puts "Translate content must be present. e.g. translater 'hello, China!'"
+            exit
+          end
 
-        content = args.first.strip
+          content = args.first.strip
+        end
       end
     end
 
@@ -468,7 +471,7 @@ end
       gets
     end
 
-    while results = session.find_elements(:css, "p.target-output span")
+    while results = session.find_elements(:css, "p.ordinary-output.target-output")
       break unless results.empty?
 
       sleep 0.2
