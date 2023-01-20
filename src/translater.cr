@@ -26,7 +26,7 @@ module Translater
   content = ""
   browser = Browser::Firefox
   engine_list = Engine.values.shuffle![0..0]
-  timeout_seconds = 10
+  timeout_seconds : Int32 = 10
 
   stdin = [] of String
 
@@ -97,7 +97,7 @@ multi-engine is supported, split with comma, e.g. -e youdao,tencent
     parser.on(
       "--timeout=SECONDS",
       "Specify timeout for get translate result, default is 10 seconds") do |seconds|
-      timeout_seconds = seconds
+      timeout_seconds = seconds.to_i
     end
 
     parser.unknown_args do |args|
@@ -428,29 +428,19 @@ end
   def self.baidu_translater(session, content, debug_mode)
     session.navigate_to("https://fanyi.baidu.com/")
 
-    while (elements = session.find_elements(:css, "#app-guide"); !elements.empty?)
-      while (elements1 = session.find_elements(:css, "span.app-guide-close"); !elements1.empty?)
-        while (element = session.find_element(:css, "span.app-guide-close")).displayed?
-          element.click
-
-          sleep 0.2
-        end
+    while session.find_by_selector "#app-guide"
+      while (element = session.find_by_selector "span.app-guide-close")
+        element.click
 
         sleep 0.2
       end
 
-      break if (elements = session.find_elements(:css, ".app-guide-hide"); !elements.empty?)
+      break if session.find_by_selector ".app-guide-hide"
 
       sleep 0.2
     end
 
-    while (elements = session.find_elements(:css, "textarea#baidu_translate_input"); elements.empty?)
-      sleep 0.2
-    end
-
-    source_content_ele = elements.first
-
-    while !source_content_ele.displayed?
+    until (source_content_ele = session.find_by_selector("textarea#baidu_translate_input"))
       sleep 0.2
     end
 
@@ -479,15 +469,11 @@ end
       gets
     end
 
-    while results = session.find_elements(:css, "p.ordinary-output.target-output")
-      break unless results.empty?
-
+    until result = session.find_by_selector("p.ordinary-output.target-output")
       sleep 0.2
     end
 
-    while result = results.first
-      break unless result.text.blank?
-
+    while result.text.blank?
       sleep 0.2
     end
 
