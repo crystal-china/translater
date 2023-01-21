@@ -6,7 +6,7 @@ authors:
 
 targets:
   translater:
-    main: src/translater.cr
+    main: src/cli.cr
 
 dependencies:
   selenium:

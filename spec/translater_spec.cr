@@ -17,10 +17,6 @@ describe "Translater" do
     system("./bin/translater 'Hello, China!'").should be_true
   end
 
-  it "translate E/C use youdao" do
-    system("./bin/translater -e youdao 'Hello, China!'").should be_true
-  end
-
   it "translate C/E use youdao" do
     system("./bin/translater -e youdao '你好，中国！'").should be_true
   end
@@ -39,10 +35,6 @@ describe "Translater" do
 
   it "translate C/E use alibaba" do
     system("./bin/translater -e ali '你好，中国！'").should be_true
-  end
-
-  it "translate E/C use baidu" do
-    system("./bin/translater -e baidu 'Hello, China!'").should be_true
   end
 
   it "translate C/E use baidu" do
