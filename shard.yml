@@ -13,6 +13,8 @@ dependencies:
     github: matthewmcgarvey/selenium.cr
   webdrivers:
     github: matthewmcgarvey/webdrivers.cr
+  sqlite3:
+    github: crystal-lang/crystal-sqlite3
 
 crystal: 1.8.0
 

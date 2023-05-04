@@ -4,6 +4,10 @@ shards:
     git: https://github.com/naqvis/crystar.git
     version: 0.2.0+git.commit.56db8bb9dfbd5ed6d7908353405a5fae632a6561
 
+  db:
+    git: https://github.com/crystal-lang/crystal-db.git
+    version: 0.11.0
+
   habitat:
     git: https://github.com/luckyframework/habitat.git
     version: 0.4.7
@@ -11,6 +15,10 @@ shards:
   selenium:
     git: https://github.com/matthewmcgarvey/selenium.cr.git
     version: 0.10.0
+
+  sqlite3:
+    git: https://github.com/crystal-lang/crystal-sqlite3.git
+    version: 0.19.0
 
   webdrivers:
     git: https://github.com/matthewmcgarvey/webdrivers.cr.git

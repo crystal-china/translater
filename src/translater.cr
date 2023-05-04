@@ -71,10 +71,29 @@ class Translater
 
       spawn do
         begin
-          Youdao.new(new_session, content, debug_mode) if engine_list.includes? Engine::Youdao
-          Tencent.new(new_session, content, debug_mode) if engine_list.includes? Engine::Tencent
-          Ali.new(new_session, content, debug_mode) if engine_list.includes? Engine::Ali
-          Baidu.new(new_session, content, debug_mode) if engine_list.includes? Engine::Baidu
+          DB.connect DB_FILE do |db|
+            start = Time.monotonic
+
+            if engine_list.includes? Engine::Youdao
+              Youdao.new(new_session, content, debug_mode)
+              db.exec "insert into youdao (elapsed_time) values (?)", (Time.monotonic - start).milliseconds
+            end
+
+            if engine_list.includes? Engine::Tencent
+              Tencent.new(new_session, content, debug_mode)
+              db.exec "insert into tencent (elapsed_time) values (?)", (Time.monotonic - start).milliseconds
+            end
+
+            if engine_list.includes? Engine::Ali
+              Ali.new(new_session, content, debug_mode)
+              db.exec "insert into ali (elapsed_time) values (?)", (Time.monotonic - start).milliseconds
+            end
+
+            if engine_list.includes? Engine::Baidu
+              Baidu.new(new_session, content, debug_mode)
+              db.exec "insert into baidu (elapsed_time) values (?)", (Time.monotonic - start).milliseconds
+            end
+          end
 
           chan.send(nil)
         rescue e : Selenium::Error
@@ -87,6 +106,11 @@ class Translater
       when chan.receive
       when timeout (engine_list.size * timeout_seconds).seconds
         STDERR.puts %{Timeout! engine: #{engine_list.join(", ")}}
+        if engine_list.size == 1
+          DB.connect DB_FILE do |db|
+            db.exec "insert into #{engine_list.first.to_s.downcase} (elapsed_time) values (?)", timeout_seconds * 1000
+          end
+        end
       end
     ensure
       new_session.delete

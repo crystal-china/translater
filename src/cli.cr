@@ -1,5 +1,9 @@
 require "option_parser"
 require "./translater"
+require "db"
+require "sqlite3"
+
+DB_FILE = "sqlite3:./profile.db"
 
 enum TargetLanguage
   Chinese
@@ -117,6 +121,33 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
     timeout_seconds = 100000 # disable timeout if debug mode
   end
 
+  parser.on("--create-db", "Create profile dbs for translate engines") do
+    DB.connect DB_FILE do |db|
+      db.exec "create table if not exists ali (
+            id INTEGER PRIMARY KEY,
+            elapsed_time INTEGER,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );"
+      db.exec "create table if not exists tencent (
+            id INTEGER PRIMARY KEY,
+            elapsed_time INTEGER,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );"
+      db.exec "create table if not exists youdao (
+            id INTEGER PRIMARY KEY,
+            elapsed_time INTEGER,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );"
+      db.exec "create table if not exists baidu (
+            id INTEGER PRIMARY KEY,
+            elapsed_time INTEGER,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );"
+    end
+    STDERR.puts "Create dbs done."
+    exit
+  end
+
   parser.on("-h", "--help", "Show this help message and exit") do
     STDERR.puts parser
     exit
@@ -146,6 +177,11 @@ if target_language.nil?
   else
     target_language = TargetLanguage::Chinese
   end
+end
+
+if !File.exists? DB_FILE.split(':')[1]
+  STDERR.puts "Run `translater --create-db' first."
+  exit
 end
 
 Translater.new(
