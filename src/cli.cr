@@ -3,7 +3,8 @@ require "./translater"
 require "db"
 require "sqlite3"
 
-DB_FILE = "sqlite3:./profile.db"
+DB_FILE_ROOT = "#{Process.executable_path.as(String)}/../.."
+DB_FILE      = "sqlite3:#{File.expand_path(DB_FILE_ROOT)}/profile.db"
 
 enum TargetLanguage
   Chinese
