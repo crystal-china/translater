@@ -14,7 +14,6 @@ DESTDIR ?= /usr/local
 BINDIR ?= $(DESTDIR)/bin
 INSTALL ?= /usr/bin/install
 
-ENV ?= CRYSTAL_PATH=$(CRYSTAL_PATH)
 SOURCES := $(shell find src -name '*.cr')
 O := bin/$(NAME)
 
@@ -22,20 +21,20 @@ all: $(O)
 
 $(O): $(SOURCES)
 	mkdir -p bin
-	$(ENV) $(SHARDS) build $(FLAGS)
+	$(SHARDS) build $(FLAGS)
 
 .PHONY: $(CHECK)
-	$(ENV) $(SHARDS) check || $(ENV) $(SHARDS) install
+	$(SHARDS) check || $(SHARDS) install
 
 .PHONY: release
 release: $(CHECK)
 	mkdir -p bin
-	$(ENV) $(SHARDS) build $(RELEASE_FLAGS)
+	$(SHARDS) build $(RELEASE_FLAGS)
 
 .PHONY: spec
 spec:
 	mkdir -p bin
-	$(ENV) $(COMPILER) spec $(FLAGS) --order=random --error-on-warnings
+	$(COMPILER) spec $(FLAGS) --order=random --error-on-warnings
 
 .PHONY: install
 install: $(O) ## Install the compiler at DESTDIR
