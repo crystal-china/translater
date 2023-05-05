@@ -122,30 +122,32 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
     timeout_seconds = 100000 # disable timeout if debug mode
   end
 
-  parser.on("--create-db", "Create profile dbs for translate engines") do
+  parser.on("--profile", "Create profile dbs for translate engines") do
+    engine_names = Engine.names.map(&.downcase)
     DB.connect DB_FILE do |db|
-      db.exec "create table if not exists ali (
+      if File.exists? DB_FILE.split(':')[1]
+        ary = [] of String
+
+        engine_names.each do |engine_name|
+          db.query "select avg(elapsed_time) from #{engine_name};" do |rs|
+            rs.each do
+              ary.push "#{engine_name} average elapsed_time: #{rs.read(Float64)} msecs.\n"
+            end
+          end
+        end
+        puts ary.sort_by { |e| e[/[\d\.]+/] }.join
+      else
+        engine_names.each do |engine_name|
+          db.exec "create table if not exists #{engine_name} (
             id INTEGER PRIMARY KEY,
             elapsed_time INTEGER,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );"
-      db.exec "create table if not exists tencent (
-            id INTEGER PRIMARY KEY,
-            elapsed_time INTEGER,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );"
-      db.exec "create table if not exists youdao (
-            id INTEGER PRIMARY KEY,
-            elapsed_time INTEGER,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );"
-      db.exec "create table if not exists baidu (
-            id INTEGER PRIMARY KEY,
-            elapsed_time INTEGER,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );"
+        end
+
+        STDERR.puts "Initialize dbs done."
+      end
     end
-    STDERR.puts "Create dbs done."
     exit
   end
 
