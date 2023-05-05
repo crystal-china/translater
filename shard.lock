@@ -1,5 +1,9 @@
 version: 2.0
 shards:
+  clipboard:
+    git: https://github.com/data-niklas/clipboard.git
+    version: 0.1.0+git.commit.57d00edfc6ccad66ee4dcf4f88113c900d67428b
+
   crystar:
     git: https://github.com/naqvis/crystar.git
     version: 0.2.0+git.commit.56db8bb9dfbd5ed6d7908353405a5fae632a6561
