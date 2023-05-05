@@ -130,9 +130,9 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
         ary = [] of String
 
         engine_names.each do |engine_name|
-          db.query "select avg(elapsed_time) from #{engine_name};" do |rs|
+          db.query "select avg(elapsed_time), count(elapsed_time) from #{engine_name};" do |rs|
             rs.each do
-              ary.push "#{engine_name} average elapsed_time: #{rs.read(Float64)} msecs.\n"
+              ary.push "#{engine_name} average elapsed_time: #{rs.read(Float64)} msecs for #{rs.read(Int64)} samples\n"
             end
           end
         end
