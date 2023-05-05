@@ -13,6 +13,7 @@ end
 
 enum Browser
   Firefox
+  Chrome
 end
 
 enum Engine
@@ -25,7 +26,7 @@ end
 target_language : TargetLanguage? = nil
 debug_mode = false
 content = ""
-browser = Browser::Firefox
+browser = Browser::Chrome
 engine_list = Engine.values.shuffle![0..0]
 timeout_seconds : Int32 = 10
 
@@ -64,7 +65,7 @@ USAGE
   parser.on(
     "-b BROWSER",
     "--browser=BROWSER",
-    "Specify browser used for scrap, only support firefox for now, default is firefox.
+    "Specify browser used for scrap, support Firefox and Chrome, default is firefox.
 ") do |b|
     value = Browser.parse?(b)
 
