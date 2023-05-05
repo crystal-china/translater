@@ -136,7 +136,7 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
             end
           end
         end
-        puts ary.sort_by { |e| e[/[\d\.]+/] }.join
+        puts ary.sort_by { |e| e[/[\d\.]+/].to_f64 }.join
       else
         engine_names.each do |engine_name|
           db.exec "create table if not exists #{engine_name} (
