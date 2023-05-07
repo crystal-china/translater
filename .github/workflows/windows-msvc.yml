@@ -1,0 +1,45 @@
+on:
+  push:
+    tags:
+      - "v*.*.*"
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Cache shards
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/shards
+          key: ${{ runner.os }}-shards-${{ hashFiles('shard.yml') }}
+          restore-keys: ${{ runner.os }}-shards-
+      - name: Download source
+        uses: actions/checkout@v2
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+      - name: Install shards
+        run: shards check || shards install --without-development
+      - name: package information
+        run: |
+          echo "BINARY_NAME=bin/translater" >> $Env:GITHUB_ENV
+          echo "PKG_ARCH=x86_64" >> $Env:GITHUB_ENV
+          echo "RELEASE_VERSION=v0.4.2" >> $Env:GITHUB_ENV
+          echo "PLATFORM=pc-windows-msvc.zip" >> $Env:GITHUB_ENV
+          echo "BUILD_ARGS=" >> $Env:GITHUB_ENV
+      - name: set asset name
+        run: |
+          echo "ASSERT_NAME=${{env.BINARY_NAME}}-${{env.RELEASE_VERSION}}-${{env.PKG_ARCH}}-${{env.PLATFORM}}" >> $Env:GITHUB_ENV
+      - name: release binary
+        id: release
+        run: |
+          echo "ASSERT_NAME=${{env.ASSERT_NAME}}" >> $GITHUB_OUTPUT
+          shards build --production --release --progress --no-debug -Dstrict_multi_assign -Dno_number_autocast ${{env.BUILD_ARGS}}
+          7z a ${{env.ASSERT_NAME}} ${{env.BINARY_NAME}}.exe LICENSE
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            ${{steps.release.outputs.ASSERT_NAME}}
