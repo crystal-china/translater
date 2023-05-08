@@ -125,8 +125,8 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
 
   parser.on("--profile", "Create profile dbs for translate engines") do
     engine_names = Engine.names.map(&.downcase)
-    DB.connect DB_FILE do |db|
-      if File.exists? DB_FILE.split(':')[1]
+    if File.exists? DB_FILE.split(':')[1]
+      DB.connect DB_FILE do |db|
         ary = [] of String
 
         engine_names.each do |engine_name|
@@ -137,7 +137,9 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
           end
         end
         puts ary.sort_by { |e| e[/[\d\.]+/].to_f64 }.join
-      else
+      end
+    else
+      DB.open DB_FILE do |db|
         engine_names.each do |engine_name|
           db.exec "create table if not exists #{engine_name} (
             id INTEGER PRIMARY KEY,
@@ -146,7 +148,7 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
   );"
         end
 
-        STDERR.puts "Initialize dbs done."
+        STDERR.puts "Initialize profile dbs done."
       end
     end
     exit
@@ -184,7 +186,7 @@ if target_language.nil?
 end
 
 if !File.exists? DB_FILE.split(':')[1]
-  STDERR.puts "Run `translater --create-db' first."
+  STDERR.puts "Run `translater --profile' first."
   exit
 end
 
