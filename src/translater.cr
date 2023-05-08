@@ -51,18 +51,18 @@ class Translater
 
     driver, session = create_session(browser, debug_mode)
 
-    while session.nil?
-      STDERR.puts "Try restart current geckodriver ..."
-      system("pkill geckodriver")
-      sleep 1
-      driver, session = create_session(browser, debug_mode)
-    end
+    # while session.nil?
+    #   STDERR.puts "Try restart current geckodriver ..."
+    #   system("pkill geckodriver")
+    #   sleep 1
+    #   driver, session = create_session(browser, debug_mode)
+    # end
 
     new_session = session.not_nil!
 
     begin
       # Clean Cookies
-      cookie_manager = Selenium::CookieManager.new(command_handler: new_session.command_handler, session_id: session.id)
+      cookie_manager = Selenium::CookieManager.new(command_handler: new_session.command_handler, session_id: new_session.id)
       cookie_manager.delete_all_cookies
 
       chan = Channel(Nil).new
