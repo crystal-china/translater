@@ -11,6 +11,7 @@ targets:
 dependencies:
   selenium:
     github: matthewmcgarvey/selenium.cr
+    branch: master
   webdrivers:
     github: matthewmcgarvey/webdrivers.cr
   sqlite3:

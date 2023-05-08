@@ -14,7 +14,7 @@ shards:
 
   selenium:
     git: https://github.com/matthewmcgarvey/selenium.cr.git
-    version: 0.10.0
+    version: 0.10.0+git.commit.c73022f630ac67cb1745874e0963310f71b9a469
 
   sqlite3:
     git: https://github.com/crystal-lang/crystal-sqlite3.git
