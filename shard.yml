@@ -15,8 +15,6 @@ dependencies:
     github: matthewmcgarvey/webdrivers.cr
   sqlite3:
     github: crystal-lang/crystal-sqlite3
-  clipboard:
-    github: data-niklas/clipboard
 
 crystal: 1.8.0
 
