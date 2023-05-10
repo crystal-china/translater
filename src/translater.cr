@@ -3,7 +3,7 @@ require "selenium"
 require "./translater/**"
 
 class Translater
-  def create_session(browser, debug_mode)
+  def create_driver(browser, debug_mode)
     case browser
     in Browser::Firefox
       driver_path = Webdrivers::Geckodriver.install
@@ -25,6 +25,10 @@ class Translater
       capabilities.chrome_options = options
     end
 
+    {driver, capabilities}
+  end
+
+  def create_session(driver, capabilities)
     if driver.status.ready?
       session = driver.create_session(capabilities)
     else
@@ -40,50 +44,58 @@ class Translater
     new_session
   end
 
-  def initialize(content, target_language, debug_mode, browser, engine_list, timeout_seconds)
+  def initialize(content, target_language, debug_mode, browser, engine_list, timeout_seconds, profile_mode)
     return if content == "--help"
 
     begin
       chan = Channel(Tuple(String, String, Time::Span)).new
 
+      driver, capabilities = create_driver(browser, debug_mode)
+
       begin
         start_time = Time.monotonic
 
         if engine_list.includes? Engine::Youdao
-          spawn Youdao.new(create_session(browser, debug_mode), content, debug_mode, chan, start_time)
+          spawn Youdao.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
         end
 
         if engine_list.includes? Engine::Tencent
-          spawn Tencent.new(create_session(browser, debug_mode), content, debug_mode, chan, start_time)
+          spawn Tencent.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
         end
 
         if engine_list.includes? Engine::Ali
-          spawn Ali.new(create_session(browser, debug_mode), content, debug_mode, chan, start_time)
+          spawn Ali.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
         end
 
         if engine_list.includes? Engine::Baidu
-          spawn Baidu.new(create_session(browser, debug_mode), content, debug_mode, chan, start_time)
+          spawn Baidu.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
         end
       rescue e : Selenium::Error
         STDERR.puts e.message
         exit
       end
 
-      DB.open DB_FILE do |db|
-        engine_list.size.times do
-          select
-          when result = chan.receive
-            translated_text, engine_name, time_span = result
-            elapsed_seconds = sprintf("%.2f", time_span.total_seconds)
+      if profile_mode.enable?
+        db = DB.open DB_FILE
+      end
 
-            puts "---------------#{engine_name}, spent #{elapsed_seconds} seconds---------------\n#{translated_text}"
-            db.exec "insert into #{engine_name.underscore} (elapsed_seconds) values (?)", elapsed_seconds.to_f
-          when timeout timeout_seconds.seconds
-            STDERR.puts "Timeout!"
+      engine_list.size.times do
+        select
+        when result = chan.receive
+          translated_text, engine_name, time_span = result
+          elapsed_seconds = sprintf("%.2f", time_span.total_seconds)
+
+          puts "---------------#{engine_name}, spent #{elapsed_seconds} seconds---------------\n#{translated_text}"
+          if profile_mode.enable?
+            db.not_nil!.exec "insert into #{engine_name.underscore} (elapsed_seconds) values (?)", elapsed_seconds.to_f
           end
+        when timeout timeout_seconds.seconds
+          STDERR.puts "Timeout!"
         end
       end
     end
+  ensure
+    driver.stop if driver
   end
 
   def self.input(element, content)
