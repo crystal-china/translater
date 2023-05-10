@@ -42,9 +42,11 @@ class Translater
         sleep 0.2
       end
 
-      chan.send({result.text, self.class.name.split(":")[-1], Time.monotonic - start_time})
-    ensure
+      text = result.text
+
       session.delete
+
+      chan.send({text, self.class.name.split(":")[-1], Time.monotonic - start_time})
     end
   end
 end

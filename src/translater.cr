@@ -93,9 +93,9 @@ class Translater
           STDERR.puts "Timeout!"
         end
       end
+    ensure
+      driver.stop if driver
     end
-  ensure
-    driver.stop if driver
   end
 
   def self.input(element, content)
