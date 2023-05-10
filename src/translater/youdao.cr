@@ -1,6 +1,6 @@
 class Translater
   class Youdao
-    def initialize(session, content, debug_mode)
+    def initialize(session, content, debug_mode, chan, start_time)
       session.navigate_to("https://fanyi.youdao.com/index.html")
 
       while session.find_by_selector ".pop-up-comp"
@@ -42,29 +42,7 @@ class Translater
         sleep 0.2
       end
 
-      puts "---------------Youdao---------------\n#{result.text}"
-    end
-
-    def initialize(chan, content)
-      url = "https://fanyi.baidu.com/"
-      doc = Crystagiri::HTML.from_url url, follow: true
-
-      # until (source_content_ele = session.find_by_selector("textarea#source"))
-      #   sleep 0.2
-      # end
-
-      # puts doc.content
-      loop do
-        input = doc.at_css("span.app-guide-close")
-        p input
-        sleep 1
-      end
-
-      # until (input = doc.at_css("#js_fanyi_input"))
-      #   sleep 0.2
-      # end
-
-      puts "---------------Youdao---------------\n#{Time.local}"
+      chan.send({result.text, self.class.name.split(":")[-1], Time.monotonic - start_time})
     end
   end
 end

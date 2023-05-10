@@ -43,76 +43,58 @@ class Translater
       session = nil
     end
 
-    {driver, session}
+    new_session = session.not_nil!
+
+    # Clean Cookies
+    cookie_manager = Selenium::CookieManager.new(command_handler: new_session.command_handler, session_id: new_session.id)
+    cookie_manager.delete_all_cookies
+
+    new_session
   end
 
   def initialize(content, target_language, debug_mode, browser, engine_list, timeout_seconds)
     return if content == "--help"
 
-    driver, session = create_session(browser, debug_mode)
-
-    # while session.nil?
-    #   STDERR.puts "Try restart current geckodriver ..."
-    #   system("pkill geckodriver")
-    #   sleep 1
-    #   driver, session = create_session(browser, debug_mode)
-    # end
-
-    new_session = session.not_nil!
-
     begin
-      # Clean Cookies
-      cookie_manager = Selenium::CookieManager.new(command_handler: new_session.command_handler, session_id: new_session.id)
-      cookie_manager.delete_all_cookies
+      chan = Channel(Tuple(String, String, Time::Span)).new
 
-      chan = Channel(Nil).new
+      begin
+        start_time = Time.monotonic
 
-      spawn do
-        begin
-          DB.connect DB_FILE do |db|
-            start = Time.monotonic
-
-            if engine_list.includes? Engine::Youdao
-              Youdao.new(new_session, content, debug_mode)
-              db.exec "insert into youdao (elapsed_time) values (?)", (Time.monotonic - start).milliseconds
-            end
-
-            if engine_list.includes? Engine::Tencent
-              Tencent.new(new_session, content, debug_mode)
-              db.exec "insert into tencent (elapsed_time) values (?)", (Time.monotonic - start).milliseconds
-            end
-
-            if engine_list.includes? Engine::Ali
-              Ali.new(new_session, content, debug_mode)
-              db.exec "insert into ali (elapsed_time) values (?)", (Time.monotonic - start).milliseconds
-            end
-
-            if engine_list.includes? Engine::Baidu
-              Baidu.new(new_session, content, debug_mode)
-              db.exec "insert into baidu (elapsed_time) values (?)", (Time.monotonic - start).milliseconds
-            end
-          end
-
-          chan.send(nil)
-        rescue e : Selenium::Error
-          STDERR.puts e.message
-          exit
+        if engine_list.includes? Engine::Youdao
+          spawn Youdao.new(create_session(browser, debug_mode), content, debug_mode, chan, start_time)
         end
+
+        if engine_list.includes? Engine::Tencent
+          spawn Tencent.new(create_session(browser, debug_mode), content, debug_mode, chan, start_time)
+        end
+
+        if engine_list.includes? Engine::Ali
+          spawn Ali.new(create_session(browser, debug_mode), content, debug_mode, chan, start_time)
+        end
+
+        if engine_list.includes? Engine::Baidu
+          spawn Baidu.new(create_session(browser, debug_mode), content, debug_mode, chan, start_time)
+        end
+      rescue e : Selenium::Error
+        STDERR.puts e.message
+        exit
       end
 
-      select
-      when chan.receive
-      when timeout (engine_list.size * timeout_seconds).seconds
-        STDERR.puts %{Timeout! engine: #{engine_list.join(", ")}}
-        if engine_list.size == 1
-          DB.connect DB_FILE do |db|
-            db.exec "insert into #{engine_list.first.to_s.downcase} (elapsed_time) values (?)", timeout_seconds * 1000
+      DB.open DB_FILE do |db|
+        engine_list.size.times do
+          select
+          when result = chan.receive
+            translated_text, engine_name, time_span = result
+            elapsed_seconds = sprintf("%.2f", time_span.total_seconds)
+
+            puts "---------------#{engine_name}, spent #{elapsed_seconds} seconds---------------\n#{translated_text}"
+            db.exec "insert into #{engine_name.underscore} (elapsed_seconds) values (?)", elapsed_seconds.to_f
+          when timeout timeout_seconds.seconds
+            STDERR.puts "Timeout!"
           end
         end
       end
-    ensure
-      new_session.delete
-      driver.stop
     end
   end
 

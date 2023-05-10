@@ -1,6 +1,6 @@
 class Translater
   class Ali
-    def initialize(session, content, debug_mode)
+    def initialize(session, content, debug_mode, chan, start_time)
       session.navigate_to("https://translate.alibaba.com/")
 
       until (source_content_ele = session.find_by_selector("textarea#source"))
@@ -26,7 +26,7 @@ class Translater
         sleep 0.2
       end
 
-      puts "---------------Alibaba---------------\n#{result.text}"
+      chan.send({result.text, self.class.name.split(":")[-1], Time.monotonic - start_time})
     end
   end
 end

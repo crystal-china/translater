@@ -12,10 +12,10 @@ v0.3.0 版本引入了一个小数据库，会记录每次不同引擎翻译的�
 
 ```sh
  ╰─ $ translater --profile
-youdao average elapsed_time: 453.4 msecs for 5 samples
-baidu average elapsed_time: 513.0 msecs for 10 samples
-ali average elapsed_time: 514.2 msecs for 5 samples
-tencent average elapsed_time: 3320.285714285714 msecs for 7 samples
+youdao average elapsed_seconds: 453.4 msecs for 5 samples
+baidu average elapsed_seconds: 513.0 msecs for 10 samples
+ali average elapsed_seconds: 514.2 msecs for 5 samples
+tencent average elapsed_seconds: 3320.285714285714 msecs for 7 samples
 ```
 
 看起来 `有道` 在我这里速度快一些，用户可以根据返回的结果，

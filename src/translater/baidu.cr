@@ -1,6 +1,6 @@
 class Translater
   class Baidu
-    def initialize(session, content, debug_mode)
+    def initialize(session, content, debug_mode, chan, start_time)
       session.navigate_to("https://fanyi.baidu.com/")
 
       while session.find_by_selector "#app-guide"
@@ -38,7 +38,7 @@ class Translater
         sleep 0.2
       end
 
-      puts "---------------Baidu---------------\n#{result.text}"
+      chan.send({result.text, self.class.name.split(":")[-1], Time.monotonic - start_time})
     end
   end
 end
