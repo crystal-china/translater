@@ -2,6 +2,7 @@ on:
   push:
     tags:
       - "v*.*.*"
+      - test1
 
 jobs:
   build:
@@ -15,12 +16,8 @@ jobs:
           restore-keys: ${{ runner.os }}-shards-
       - name: Download source
         uses: actions/checkout@v2
-      - name: Install Firefox
-        run: |
-          wget -nv -O ~/FirefoxSetup.tar.bz2 "https://download.mozilla.org/?product=firefox-latest&os=linux64"
-          sudo tar xjf ~/FirefoxSetup.tar.bz2 -C /opt/
-          sudo ln -s /opt/firefox/firefox /usr/local/bin/firefox
-          firefox --version
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@latest
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
       - name: Install shards
