@@ -149,7 +149,7 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
         engine_names.each do |engine_name|
           db.exec "create table if not exists #{engine_name} (
             id INTEGER PRIMARY KEY,
-            elapsed_time INTEGER,
+            elapsed_time REAL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );"
         end
