@@ -97,6 +97,12 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
   end
 
   parser.on(
+    "-A",
+    "Use all known engine for translate, can be used for profile purpose.") do
+    engine_list = Engine.values
+  end
+
+  parser.on(
     "--timeout=SECONDS",
     "Specify timeout for get translate result, default is 10 seconds") do |seconds|
     timeout_seconds = seconds.to_i
