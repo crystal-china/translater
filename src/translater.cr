@@ -7,12 +7,6 @@ class Translater
     case browser
     in Browser::Firefox
       driver_path = Webdrivers::Geckodriver.install
-      # if Webdrivers::Geckodriver.driver_version
-      #   driver_path = Webdrivers::Geckodriver.driver_path
-      # else
-      #   driver_path = Webdrivers::Geckodriver.install
-      # end
-
       service = Selenium::Service.firefox(driver_path: File.expand_path(driver_path, home: true))
       driver = Selenium::Driver.for(:firefox, service: service)
       options = Selenium::Firefox::Capabilities::FirefoxOptions.new
@@ -22,12 +16,6 @@ class Translater
       capabilities.firefox_options = options
     in Browser::Chrome
       driver_path = Webdrivers::Chromedriver.install
-      # if Webdrivers::Chromedriver.driver_version
-      #   driver_path = Webdrivers::Chromedriver.driver_path
-      # else
-      #   driver_path = Webdrivers::Chromedriver.install
-      # end
-
       service = Selenium::Service.chrome(driver_path: File.expand_path(driver_path, home: true))
       driver = Selenium::Driver.for(:chrome, service: service)
       options = Selenium::Chrome::Capabilities::ChromeOptions.new
