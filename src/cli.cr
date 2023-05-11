@@ -105,6 +105,20 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
   end
 
   parser.on(
+    "-a",
+    "--auto",
+    "Use the fastest engine instead random selection, check --profile for details.") do
+    DB.connect DB_FILE do |db|
+      db.query "select name from fastest_engine limit 1;" do |rs|
+        rs.each do
+          # If fastest_engine is empty, this block will be ignored.
+          engine_list = [Engine.parse(rs.read(String))]
+        end
+      end
+    end
+  end
+
+  parser.on(
     "-A",
     "Use all known engine for translate, can be used for profile purpose.") do
     engine_list = Engine.values
@@ -151,7 +165,13 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
             end
           end
         end
-        puts ary.sort_by { |e| e[/[\d\.]+/].to_f64 }.join
+        ary.sort_by! { |e| e[/[\d\.]+/].to_f64 }
+
+        fastest_engine = ary[0][/(\w+):/, 1]
+
+        db.exec("INSERT INTO fastest_engine (id,name) VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET name = ?;", 1, fastest_engine, fastest_engine)
+
+        puts ary.join
       end
     else
       DB.open DB_FILE do |db|
@@ -162,6 +182,11 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );"
         end
+
+        db.exec "create table if not exists fastest_engine (
+            id INTEGER PRIMARY KEY,
+            name TEXT
+  );"
 
         STDERR.puts "Initialize profile dbs done."
       end
