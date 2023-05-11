@@ -73,7 +73,7 @@ USAGE
   parser.on(
     "-b BROWSER",
     "--browser=BROWSER",
-    "Specify browser used for scrap, support Firefox and Chrome, default is firefox.
+    "Specify browser used for scrap, support Firefox and Chrome, default is Chrome.
 ") do |b|
     value = Browser.parse?(b)
 
@@ -165,7 +165,8 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
             end
           end
         end
-        ary.sort_by! { |e| e[/[\d\.]+/].to_f64 }
+
+        ary.sort_by! &.[/[\d\.]+/].to_f64
 
         fastest_engine = ary[0][/(\w+):/, 1]
 
