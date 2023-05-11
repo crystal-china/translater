@@ -26,7 +26,7 @@ jobs:
         run: crystal tool format --check
       - name: Run tests
         run: |
-          google-chrome-stable --version && crystal spec --error-on-warnings --tag cii --verbose
+          google-chrome-stable --version && crystal spec --error-on-warnings --tag ci --verbose
       - name: package information
         run: |
           echo "BINARY_NAME=bin/$(cat shard.yml |grep targets -A1|tail -n1 |sed 's#[ :]##g')" >> $GITHUB_ENV
