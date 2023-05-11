@@ -152,7 +152,8 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
         engine_names.each do |engine_name|
           db.query "select avg(elapsed_seconds), count(elapsed_seconds) from #{engine_name};" do |rs|
             rs.each do
-              ary.push "#{engine_name} average elapsed_seconds: #{rs.read(Float64)} msecs for #{rs.read(Int64)} samples\n"
+              elapsed_seconds = sprintf("%.2f", rs.read(Float64))
+              ary.push "#{engine_name}: average spent #{elapsed_seconds} seconds for #{rs.read(Int64)} samples\n"
             end
           end
         end
