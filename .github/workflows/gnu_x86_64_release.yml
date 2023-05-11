@@ -2,7 +2,7 @@ on:
   push:
     tags:
       - "v*.*.*"
-      - test1
+      - test
 
 jobs:
   build:
@@ -25,7 +25,8 @@ jobs:
       - name: Check formatting
         run: crystal tool format --check
       - name: Run tests
-        run: crystal spec --order=random --error-on-warnings
+        run: |
+          google-chrome-stable --version && crystal spec --error-on-warnings --tag ci --verbose
       - name: package information
         run: |
           echo "BINARY_NAME=bin/$(cat shard.yml |grep targets -A1|tail -n1 |sed 's#[ :]##g')" >> $GITHUB_ENV

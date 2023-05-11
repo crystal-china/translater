@@ -5,7 +5,7 @@ describe "Translater" do
     system("shards build")
   end
 
-  it "no args work" do
+  it "no args should work", tags: "ci" do
     system("./bin/translater").should be_true
   end
 
@@ -17,32 +17,20 @@ describe "Translater" do
     system("./bin/translater --no-profile 'Hello, China!'").should be_true
   end
 
-  it "translate C/E use youdao" do
+  it "translate C/E use youdao", tags: "ci" do
     system("./bin/translater --no-profile -e youdao '你好，中国！'").should be_true
   end
 
-  it "translate E/C use tentent" do
-    system("./bin/translater --no-profile -e tencent 'Hello, China!'").should be_true
-  end
-
-  it "translate C/E use tentent" do
-    system("./bin/translater --no-profile -e tencent '你好，中国！'").should be_true
-  end
-
-  it "translate E/C use alibaba" do
-    system("./bin/translater --no-profile -e ali 'Hello, China!'").should be_true
-  end
-
-  it "translate C/E use alibaba" do
-    system("./bin/translater --no-profile -e ali '你好，中国！'").should be_true
-  end
-
-  it "translate C/E use baidu" do
-    system("./bin/translater --no-profile -e baidu '你好，中国！'").should be_true
+  it "translate E/C use youdao", tags: "ci" do
+    system("./bin/translater --no-profile -e youdao 'Hello, China!'").should be_true
   end
 
   it "translate E/C use youdao+baidu" do
     system("./bin/translater --no-profile -e baidu,youdao 'Hello, China!'").should be_true
+  end
+
+  it "translate E/C use all supported engines" do
+    system("./bin/translater --no-profile -A 'Hello, China!'").should be_true
   end
 
   it "should translate multi-line english" do
@@ -52,6 +40,6 @@ describe "Translater" do
   end
 
   it "should be false" do
-    system("./bin/translater -e not_exist_engine '你好，中国！'").should be_false
+    system("./bin/translater -e nonsupported_engine '你好，中国！'").should be_false
   end
 end
