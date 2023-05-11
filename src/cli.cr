@@ -76,22 +76,6 @@ OptionParser.parse do |parser|
 Usage: translater <option> content
 USAGE
 
-  # parser.on(
-  #       "-t TARGET",
-  #       "--target=TARGET",
-  #       "Specify target language, support zh-CN|en for now.
-  # default is translate English to Chinese.
-  # Youdao don't support this option.
-  # "
-  #     ) do |target|
-  #       target_language = TargetLanguage.parse?(target)
-
-  #       if target_language.nil?
-  #         STDERR.puts "Supported options: #{TargetLanguage.names.map(&.downcase).join ", "}"
-  #         exit 1
-  #       end
-  #     end
-
   parser.on(
     "-b BROWSER",
     "--browser=BROWSER",
@@ -216,8 +200,6 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
     exit 1
   end
 end
-
-puts "3"*100
 
 if target_language.nil?
   if content =~ /\p{Han}/
