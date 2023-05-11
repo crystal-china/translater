@@ -3,8 +3,29 @@ require "./translater"
 require "db"
 require "sqlite3"
 
-DB_FILE_ROOT = "#{Process.executable_path.as(String)}/../.."
-DB_FILE      = "sqlite3:#{File.expand_path(DB_FILE_ROOT)}/profile.db"
+DB_FILE_NAME         = "profile.db"
+DB_DEFAULT_FILE_PATH = Path["~/.#{DB_FILE_NAME}"].expand(home: true)
+
+def find_db_path
+  db_file_path = (Path["#{Process.executable_path.as(String)}/../.."] / DB_FILE_NAME).expand
+
+  return db_file_path if File.exists?(db_file_path)
+
+  xdg_data_home = ENV.fetch("XDG_DATA_HOME", "~/.local/share")
+
+  db_file_paths = {
+    Path[xdg_data_home] / "translater" / DB_FILE_NAME,
+  }
+
+  db_file_paths.each do |path|
+    expanded_path = path.expand(home: true)
+    return expanded_path if File.exists?(expanded_path)
+  end
+
+  DB_DEFAULT_FILE_PATH
+end
+
+DB_FILE = "sqlite3:#{find_db_path}"
 
 enum TargetLanguage
   Chinese
