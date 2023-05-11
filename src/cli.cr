@@ -38,11 +38,14 @@ timeout_seconds : Int32 = 10
 
 stdin = [] of String
 
+# FIXME: Don't know why, run spec on github action, cause #pipe? return true.
 if STDIN.info.type.pipe?
   while (input = STDIN.gets)
     stdin << input
   end
   content = stdin.join("\n").strip
+
+  ARGV << "--help" if content.empty? # hack for github action.
 else
   ARGV << "--help" if ARGV.empty?
 end
@@ -192,6 +195,8 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
     exit 1
   end
 end
+
+puts "3"*100
 
 if target_language.nil?
   if content =~ /\p{Han}/

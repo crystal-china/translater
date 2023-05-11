@@ -5,7 +5,7 @@ describe "Translater" do
     system("shards build")
   end
 
-  it "no args should work", tags: "ci" do
+  it "no args should work", tags: "cii" do
     system("./bin/translater").should be_true
   end
 
