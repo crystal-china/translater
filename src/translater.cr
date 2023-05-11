@@ -44,7 +44,7 @@ class Translater
     new_session
   end
 
-  def initialize(content, target_language, debug_mode, browser, engine_list, timeout_seconds, profile_mode)
+  def initialize(content, target_language, debug_mode, browser, engine_list, timeout_seconds)
     return if content == "--help"
 
     begin
@@ -75,22 +75,18 @@ class Translater
         exit
       end
 
-      if profile_mode.enable?
-        db = DB.open DB_FILE
-      end
+      DB.open DB_FILE do |db|
+        engine_list.size.times do
+          select
+          when result = chan.receive
+            translated_text, engine_name, time_span = result
+            elapsed_seconds = sprintf("%.2f", time_span.total_seconds)
 
-      engine_list.size.times do
-        select
-        when result = chan.receive
-          translated_text, engine_name, time_span = result
-          elapsed_seconds = sprintf("%.2f", time_span.total_seconds)
-
-          puts "---------------#{engine_name}, spent #{elapsed_seconds} seconds---------------\n#{translated_text}"
-          if profile_mode.enable?
-            db.not_nil!.exec "insert into #{engine_name.underscore} (elapsed_seconds) values (?)", elapsed_seconds.to_f
+            puts "---------------#{engine_name}, spent #{elapsed_seconds} seconds---------------\n#{translated_text}"
+            db.exec "insert into #{engine_name.underscore} (elapsed_seconds) values (?)", elapsed_seconds.to_f
+          when timeout timeout_seconds.seconds
+            STDERR.puts "Timeout!"
           end
-        when timeout timeout_seconds.seconds
-          STDERR.puts "Timeout!"
         end
       end
     ensure

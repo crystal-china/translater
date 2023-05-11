@@ -44,16 +44,10 @@ enum Engine
   Baidu
 end
 
-enum ProfileMode
-  Enable
-  Disable
-end
-
 target_language : TargetLanguage? = nil
 debug_mode = false
 content = ""
 browser = Browser::Chrome
-profile_mode = ProfileMode::Enable
 engine_list = Engine.values.shuffle![0..0]
 timeout_seconds : Int32 = 10
 
@@ -175,10 +169,6 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
     exit
   end
 
-  parser.on("--no-profile", "Skip record profile data, for test purpose.") do
-    profile_mode = ProfileMode::Disable
-  end
-
   parser.on("-h", "--help", "Show this help message and exit") do
     STDERR.puts parser
     exit
@@ -210,7 +200,7 @@ if target_language.nil?
   end
 end
 
-if !File.exists?(DB_FILE.split(':')[1]) && profile_mode.enable?
+if !File.exists?(DB_FILE.split(':')[1])
   STDERR.puts "Run `translater --profile' first."
   exit
 end
@@ -221,6 +211,5 @@ Translater.new(
   debug_mode: debug_mode,
   browser: browser,
   engine_list: engine_list,
-  timeout_seconds: timeout_seconds,
-  profile_mode: profile_mode
+  timeout_seconds: timeout_seconds
 )
