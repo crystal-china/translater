@@ -18,11 +18,11 @@ describe "Translater" do
     system("./bin/translater 'Hello, China!'").should be_true
   end
 
-  it "translate C/E use youdao", tags: "ci" do
+  it "translate C/E use youdao" do
     system("./bin/translater -e youdao '你好，中国！'").should be_true
   end
 
-  it "translate E/C use youdao", tags: "ci" do
+  it "translate E/C use youdao" do
     system("./bin/translater -e youdao 'Hello, China!'").should be_true
   end
 
@@ -38,6 +38,10 @@ describe "Translater" do
     system(%{./bin/translater "Specify target language, support zh-CN|en for now.
   default is translate English to Chinese.
   Youdao don't support this option."}).should be_true
+  end
+
+  it "select the fastest engine", tags: "ci" do
+    system("./bin/translater -a 'Hello, China!'").should be_true
   end
 
   it "should be false" do
