@@ -23,14 +23,14 @@ class Translater
 
       sleep 0.2
 
-      Translater.input(source_content_ele, content)
+      Translater.input(source_content_ele, content, wait_seconds: 0.1)
 
       if debug_mode
         STDERR.puts "Press any key to continue ..."
         gets
       end
 
-      until result = session.find_by_selector("p.ordinary-output.target-output")
+      until result = session.find_by_selector(".output-bd")
         sleep 0.2
       end
 

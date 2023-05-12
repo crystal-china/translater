@@ -94,20 +94,23 @@ class Translater
     end
   end
 
-  def self.input(element, content)
+  def self.input(element, content, wait_seconds = 0.05)
     if content.size > 10
       content1 = content[0..-10]
       content2 = content[-9..-1]
 
       element.send_keys(key: content1)
+
+      sleep wait_seconds
+
       content2.each_char do |e|
         element.send_keys(key: e.to_s)
-        sleep 0.05
+        sleep wait_seconds
       end
     else
       content.each_char do |e|
         element.send_keys(key: e.to_s)
-        sleep 0.05
+        sleep wait_seconds
       end
     end
   end
