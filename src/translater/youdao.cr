@@ -44,9 +44,9 @@ class Translater
 
       text = result.text
 
-      session.delete
-
       chan.send({text, self.class.name.split(":")[-1], Time.monotonic - start_time})
+    ensure
+      session.delete
     end
   end
 end
