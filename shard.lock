@@ -13,8 +13,8 @@ shards:
     version: 0.4.7
 
   selenium:
-    git: https://github.com/matthewmcgarvey/selenium.cr.git
-    version: 0.11.0+git.commit.ca2daa69b64202bd390da1b66bd64d8db74fba15
+    git: https://github.com/zw963/selenium.cr.git
+    version: 0.11.0+git.commit.6518256dab0d316d766140b8f882ba0dd44cc942
 
   sqlite3:
     git: https://github.com/crystal-lang/crystal-sqlite3.git

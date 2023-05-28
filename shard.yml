@@ -10,7 +10,7 @@ targets:
 
 dependencies:
   selenium:
-    github: matthewmcgarvey/selenium.cr
+    github: zw963/selenium.cr
     branch: master
   webdrivers:
     github: matthewmcgarvey/webdrivers.cr
