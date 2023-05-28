@@ -2,6 +2,7 @@ on:
   push:
     tags:
       - "v*.*.*"
+      - test
 
 jobs:
   build:
@@ -17,6 +18,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
+      - name: Install SQLite
+        uses: ccorsi/setup-sqlite@v1.0.1
       - name: Install shards
         run: shards check || shards install --without-development
       - name: package information
