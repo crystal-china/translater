@@ -52,27 +52,22 @@ class Translater
 
       driver, capabilities = create_driver(browser, debug_mode)
 
-      begin
-        start_time = Time.monotonic
+      start_time = Time.monotonic
 
-        if engine_list.includes? Engine::Youdao
-          spawn Youdao.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
-        end
+      if engine_list.includes? Engine::Youdao
+        spawn Youdao.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
+      end
 
-        if engine_list.includes? Engine::Tencent
-          spawn Tencent.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
-        end
+      if engine_list.includes? Engine::Tencent
+        spawn Tencent.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
+      end
 
-        if engine_list.includes? Engine::Ali
-          spawn Ali.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
-        end
+      if engine_list.includes? Engine::Ali
+        spawn Ali.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
+      end
 
-        if engine_list.includes? Engine::Baidu
-          spawn Baidu.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
-        end
-      rescue e : Selenium::Error
-        STDERR.puts e.message
-        exit
+      if engine_list.includes? Engine::Baidu
+        spawn Baidu.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
       end
 
       DB.open DB_FILE do |db|
@@ -89,7 +84,10 @@ class Translater
           end
         end
       end
+    rescue e : Selenium::Error
+      e.inspect_with_backtrace(STDERR)
     ensure
+      sleep 0.05
       driver.stop if driver
     end
   end
