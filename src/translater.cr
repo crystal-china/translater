@@ -29,13 +29,14 @@ class Translater
   end
 
   def create_session(driver, capabilities)
-    if driver.status.ready?
-      session = driver.create_session(capabilities)
-    else
-      session = nil
-    end
+    new_session = driver.create_session(capabilities)
+    # if driver.status.ready?
 
-    new_session = session.not_nil!
+    # else
+    #   session = nil
+    # end
+
+    # new_session = session.not_nil!
 
     # Clean Cookies
     cookie_manager = Selenium::CookieManager.new(command_handler: new_session.command_handler, session_id: new_session.id)
@@ -54,21 +55,29 @@ class Translater
 
       start_time = Time.monotonic
 
+      print "Using "
+
       if engine_list.includes? Engine::Youdao
+        print "Youdao "
         spawn Youdao.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
       end
 
       if engine_list.includes? Engine::Tencent
+        print "Tencent "
         spawn Tencent.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
       end
 
       if engine_list.includes? Engine::Ali
+        print "Ali "
         spawn Ali.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
       end
 
       if engine_list.includes? Engine::Baidu
+        print "Baidu "
         spawn Baidu.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
       end
+
+      puts
 
       DB.open DB_FILE do |db|
         engine_list.size.times do
