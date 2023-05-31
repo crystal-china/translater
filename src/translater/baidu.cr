@@ -15,6 +15,18 @@ class Translater
         sleep 0.2
       end
 
+      while session.find_by_selector ".desktop-guide"
+        while (element = session.find_by_selector "a.desktop-guide-close")
+          element.click
+
+          sleep 0.2
+        end
+
+        break if session.find_by_selector ".desktop-guide-hide"
+
+        sleep 0.2
+      end
+
       until (source_content_ele = session.find_by_selector("textarea#baidu_translate_input"))
         sleep 0.2
       end
