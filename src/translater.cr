@@ -101,6 +101,11 @@ class Translater
     end
   end
 
+  def self.input_use_js(session, selector, content)
+    document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
+    document_manager.execute_script(%{select = document.querySelector("#{selector}"); select.value = `#{content}`.trim()})
+  end
+
   def self.input(element, content, wait_seconds = 0.05)
     if content.size > 10
       content1 = content[0..-10]
