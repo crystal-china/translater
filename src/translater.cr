@@ -93,7 +93,7 @@ class Translater
           end
         end
       end
-    rescue e : Selenium::Error
+    rescue e : Selenium::Error | Socket::ConnectError
       e.inspect_with_backtrace(STDERR)
     ensure
       sleep 0.05

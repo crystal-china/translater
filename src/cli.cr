@@ -134,11 +134,11 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
     if !STDIN.info.type.pipe?
       if args.empty?
         STDERR.puts "Please specify translate content. e.g. translater 'hello, China!'"
-        exit
+        exit 1
       else
         if args.first.blank?
           STDERR.puts "Translate content must be present. e.g. translater 'hello, China!'"
-          exit
+          exit 1
         end
 
         content = args.first.strip
@@ -228,7 +228,7 @@ end
 
 if !File.exists?(DB_FILE.split(':')[1])
   STDERR.puts "Run `translater --profile' first."
-  exit
+  exit 1
 end
 
 Translater.new(
