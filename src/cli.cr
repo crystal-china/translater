@@ -226,7 +226,7 @@ if target_language.nil?
   end
 end
 
-if !File.exists?(DB_FILE.split(':')[1])
+if !File.exists?(DB_FILE.split(':')[1]) && debug_mode == false
   STDERR.puts "Run `translater --profile' first."
   exit 1
 end
