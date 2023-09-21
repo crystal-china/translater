@@ -11,11 +11,11 @@ class Translater
         element.click
       end
 
-      while (element = session.find_by_selector ".never-show")
-        element.click
-
-        sleep 0.2
+      until (element1 = session.find_by_selector ".never-show")
+        sleep 2
       end
+
+      element1.click
 
       until (source_content_ele = session.find_by_selector("#js_fanyi_input"))
         sleep 0.2
