@@ -10,7 +10,7 @@ shards:
 
   habitat:
     git: https://github.com/luckyframework/habitat.git
-    version: 0.4.7
+    version: 0.4.8
 
   selenium:
     git: https://github.com/zw963/selenium.cr.git
