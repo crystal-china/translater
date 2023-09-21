@@ -4,13 +4,11 @@ class Translater
       session.navigate_to("https://fanyi.youdao.com/index.html")
 
       while session.find_by_selector ".pop-up-comp"
-        while (element = session.find_by_selector "img.close")
-          element.click
-
+        until (element = session.find_by_selector ".pop-up-comp img.close")
           sleep 0.2
         end
 
-        sleep 0.2
+        element.click
       end
 
       while (element = session.find_by_selector ".never-show")
