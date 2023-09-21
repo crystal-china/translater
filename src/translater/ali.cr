@@ -58,8 +58,9 @@ class Translater
       end
 
       chan.send({text, self.class.name.split(":")[-1], Time.monotonic - start_time})
+    rescue Socket::ConnectError
     ensure
-      session.delete rescue Socket::ConnectError
+      session.delete
     end
   end
 end
