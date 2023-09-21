@@ -93,6 +93,7 @@ class Translater
           end
         end
       end
+    rescue SQLite3::Exception
     rescue e
       e.inspect_with_backtrace(STDERR)
     ensure
