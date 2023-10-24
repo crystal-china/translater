@@ -3,6 +3,8 @@ class Translater
     def initialize(session, content, debug_mode, chan, start_time)
       session.navigate_to("https://fanyi.qq.com/")
 
+      sleep 0.2
+
       until (source_content_ele = session.find_by_selector(".textpanel-source.active .textpanel-source-textarea textarea.textinput"))
         sleep 0.2
       end

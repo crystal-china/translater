@@ -3,16 +3,14 @@ class Translater
     def initialize(session, content, debug_mode, chan, start_time)
       session.navigate_to("https://fanyi.baidu.com/")
 
-      while session.find_by_selector "#app-guide"
-        while (element = session.find_by_selector "span.app-guide-close")
-          element.click
+      sleep 0.2
 
+      while session.find_by_selector "#app-guide"
+        until (element = session.find_by_selector "span.app-guide-close")
           sleep 0.2
         end
 
-        break if session.find_by_selector ".app-guide-hide"
-
-        sleep 0.2
+        element.click
       end
 
       while session.find_by_selector ".desktop-guide"
@@ -22,9 +20,11 @@ class Translater
           sleep 0.2
         end
 
-        break if session.find_by_selector ".desktop-guide-hide"
+        until session.find_by_selector ".desktop-guide-hide"
+          sleep 0.2
+        end
 
-        sleep 0.2
+        break
       end
 
       until (source_content_ele = session.find_by_selector("textarea#baidu_translate_input"))

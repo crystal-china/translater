@@ -3,6 +3,8 @@ class Translater
     def initialize(session, content, debug_mode, chan, start_time)
       session.navigate_to("https://fanyi.youdao.com/index.html")
 
+      sleep 0.2
+
       while session.find_by_selector ".pop-up-comp"
         until (element = session.find_by_selector ".pop-up-comp img.close")
           sleep 0.2
@@ -11,11 +13,15 @@ class Translater
         element.click
       end
 
-      until (element1 = session.find_by_selector ".never-show")
-        sleep 2
-      end
+      sleep 0.2
 
-      element1.click
+      while session.find_by_selector ".never-show"
+        until (element1 = session.find_by_selector ".never-show span")
+          sleep 0.2
+        end
+
+        element1.click
+      end
 
       until (source_content_ele = session.find_by_selector("#js_fanyi_input"))
         sleep 0.2
