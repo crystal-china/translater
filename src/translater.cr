@@ -26,6 +26,9 @@ class Translater
     end
 
     {driver, capabilities}
+  rescue
+    STDERR.puts "Failed, please check browser driver.
+If it still doesn't work, try delete files under ~/.webrivers and try again."
   end
 
   def create_session(driver, capabilities)
