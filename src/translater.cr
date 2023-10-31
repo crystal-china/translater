@@ -54,7 +54,7 @@ If it still doesn't work, try delete files under ~/.webrivers and try again."
     begin
       chan = Channel(Tuple(String, String, Time::Span)).new
 
-      driver, capabilities = create_driver(browser, debug_mode)
+      driver, capabilities = create_driver(browser, debug_mode).not_nil!
 
       start_time = Time.monotonic
 

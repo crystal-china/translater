@@ -2,7 +2,7 @@ version: 2.0
 shards:
   crystar:
     git: https://github.com/naqvis/crystar.git
-    version: 0.2.0+git.commit.56db8bb9dfbd5ed6d7908353405a5fae632a6561
+    version: 0.3.1
 
   db:
     git: https://github.com/crystal-lang/crystal-db.git
@@ -22,5 +22,5 @@ shards:
 
   webdrivers:
     git: https://github.com/matthewmcgarvey/webdrivers.cr.git
-    version: 0.4.2+git.commit.7366da2d8289422e6a4ad8930cde015d1dcf1142
+    version: 0.4.3
 
