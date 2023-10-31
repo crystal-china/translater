@@ -3,17 +3,17 @@ class Translater
     def initialize(session, content, debug_mode, chan, start_time)
       session.navigate_to("https://fanyi.youdao.com/index.html")
 
-      sleep 0.2
+      sleep 0.5
 
-      while session.find_by_selector ".pop-up-comp"
-        until (element = session.find_by_selector ".pop-up-comp img.close")
-          sleep 0.2
-        end
+      # while session.find_by_selector ".pop-up-comp"
+      #   until (element = session.find_by_selector ".pop-up-comp img.close")
+      #     sleep 0.2
+      #   end
 
-        element.click
-      end
+      #   element.click
+      # end
 
-      sleep 0.2
+      # sleep 0.2
 
       while session.find_by_selector ".never-show"
         until (element1 = session.find_by_selector ".never-show span")
