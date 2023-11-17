@@ -5,9 +5,9 @@ class Translater
   def create_driver(browser, debug_mode)
     case browser
     in Browser::Firefox
-      driver_path = File.expand_path("~/.webdrivers/geckodriver", home: true)
+      driver_path = "/usr/local/bin/geckodriver"
       if !File.exists?(driver_path)
-        STDERR.puts "#{driver_path} not exists! Please install correct version selenium driver for Firefox manually before continue, exit ..."
+        STDERR.puts "#{driver_path} not exists! Please install correct version Selenium driver for Firefox manually before continue, exit ..."
         exit
       end
       service = Selenium::Service.firefox(driver_path: driver_path)
@@ -18,9 +18,9 @@ class Translater
       capabilities = Selenium::Firefox::Capabilities.new
       capabilities.firefox_options = options
     in Browser::Chrome
-      driver_path = File.expand_path("~/.webdrivers/chromedriver", home: true)
+      driver_path = "/usr/local/bin/chromedriver"
       if !File.exists?(driver_path)
-        STDERR.puts "#{driver_path} not exists! Please install correct version selenium driver for Chrome manually before continue, exit ..."
+        STDERR.puts "#{driver_path} not exists! Please install correct version Selenium driver for Chrome manually before continue, exit ..."
         exit
       end
       service = Selenium::Service.chrome(driver_path: driver_path)
