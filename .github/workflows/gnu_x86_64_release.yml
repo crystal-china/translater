@@ -8,13 +8,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Cache shards
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.cache/shards
           key: ${{ runner.os }}-shards-${{ hashFiles('shard.yml') }}
           restore-keys: ${{ runner.os }}-shards-
       - name: Download source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Install Chrome
         uses: browser-actions/setup-chrome@latest
       - name: Install Chrome driver.

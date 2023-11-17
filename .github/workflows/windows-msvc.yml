@@ -9,13 +9,13 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Cache shards
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.cache/shards
           key: ${{ runner.os }}-shards-${{ hashFiles('shard.yml') }}
           restore-keys: ${{ runner.os }}-shards-
       - name: Download source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
       - name: Install SQLite

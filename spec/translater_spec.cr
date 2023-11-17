@@ -10,12 +10,12 @@ describe "Translater" do
     system("./bin/translater").should be_true
   end
 
-  it "translate C/E use default engine" do
+  it "translate C/E use default engine", tags: "ci" do
     system("./bin/translater '你好，中国！'").should be_true
   end
 
-  it "translate E/C use default engine" do
-    system("./bin/translater 'Hello, China!'").should be_true
+  it "translate E/C use all supported engines", tags: "ci" do
+    system("./bin/translater -A 'Hello, China!'").should be_true
   end
 
   it "translate C/E use youdao" do
@@ -28,10 +28,6 @@ describe "Translater" do
 
   it "translate E/C use youdao+baidu" do
     system("./bin/translater -e baidu,youdao 'Hello, China!'").should be_true
-  end
-
-  it "translate E/C use all supported engines" do
-    system("./bin/translater -A 'Hello, China!'").should be_true
   end
 
   it "should translate multi-line english" do
