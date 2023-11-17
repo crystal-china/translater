@@ -1,16 +1,8 @@
 version: 2.0
 shards:
-  crystar:
-    git: https://github.com/naqvis/crystar.git
-    version: 0.3.1
-
   db:
     git: https://github.com/crystal-lang/crystal-db.git
     version: 0.12.0
-
-  habitat:
-    git: https://github.com/luckyframework/habitat.git
-    version: 0.4.8
 
   selenium:
     git: https://github.com/zw963/selenium.cr.git
@@ -19,8 +11,4 @@ shards:
   sqlite3:
     git: https://github.com/crystal-lang/crystal-sqlite3.git
     version: 0.20.0
-
-  webdrivers:
-    git: https://github.com/matthewmcgarvey/webdrivers.cr.git
-    version: 0.4.3
 

@@ -1,4 +1,3 @@
-require "webdrivers"
 require "selenium"
 require "./translater/**"
 
@@ -6,8 +5,12 @@ class Translater
   def create_driver(browser, debug_mode)
     case browser
     in Browser::Firefox
-      driver_path = Webdrivers::Geckodriver.install
-      service = Selenium::Service.firefox(driver_path: File.expand_path(driver_path, home: true))
+      driver_path = File.expand_path("~/.webdrivers/geckodriver", home: true)
+      if !File.exists?(driver_path)
+        STDERR.puts "#{driver_path} not exists! Please install correct version selenium driver for Firefox manually before continue, exit ..."
+        exit
+      end
+      service = Selenium::Service.firefox(driver_path: driver_path)
       driver = Selenium::Driver.for(:firefox, service: service)
       options = Selenium::Firefox::Capabilities::FirefoxOptions.new
       options.args = ["--headless"] unless debug_mode == true
@@ -15,8 +18,12 @@ class Translater
       capabilities = Selenium::Firefox::Capabilities.new
       capabilities.firefox_options = options
     in Browser::Chrome
-      driver_path = Webdrivers::Chromedriver.install
-      service = Selenium::Service.chrome(driver_path: File.expand_path(driver_path, home: true))
+      driver_path = File.expand_path("~/.webdrivers/chromedriver", home: true)
+      if !File.exists?(driver_path)
+        STDERR.puts "#{driver_path} not exists! Please install correct version selenium driver for Chrome manually before continue, exit ..."
+        exit
+      end
+      service = Selenium::Service.chrome(driver_path: driver_path)
       driver = Selenium::Driver.for(:chrome, service: service)
       options = Selenium::Chrome::Capabilities::ChromeOptions.new
       options.args = ["--headless"] unless debug_mode == true

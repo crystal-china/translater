@@ -11,8 +11,6 @@ targets:
 dependencies:
   selenium:
     github: zw963/selenium.cr
-  webdrivers:
-    github: matthewmcgarvey/webdrivers.cr
   sqlite3:
     github: crystal-lang/crystal-sqlite3
 
