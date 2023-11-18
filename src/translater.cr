@@ -5,11 +5,17 @@ class Translater
   def create_driver(browser, debug_mode)
     case browser
     in Browser::Firefox
-      driver_path = "/usr/local/bin/geckodriver"
-      if !File.exists?(driver_path)
-        STDERR.puts "#{driver_path} not exists! Please install correct version Selenium driver for Firefox manually before continue, exit ..."
+      driver_paths = ["/usr/local/bin/geckodriver", "/usr/bin/geckodriver"]
+
+      driver_path = driver_paths.each do |path|
+        break path if File.executable? path
+      end
+
+      if driver_path.nil?
+        STDERR.puts "#{driver_paths.join(" or ")} not exists! Please install correct version Selenium driver for Firefox before continue, exit ..."
         exit
       end
+
       service = Selenium::Service.firefox(driver_path: driver_path)
       driver = Selenium::Driver.for(:firefox, service: service)
       options = Selenium::Firefox::Capabilities::FirefoxOptions.new
@@ -18,9 +24,14 @@ class Translater
       capabilities = Selenium::Firefox::Capabilities.new
       capabilities.firefox_options = options
     in Browser::Chrome
-      driver_path = "/usr/local/bin/chromedriver"
-      if !File.exists?(driver_path)
-        STDERR.puts "#{driver_path} not exists! Please install correct version Selenium driver for Chrome manually before continue, exit ..."
+      driver_paths = ["/usr/local/bin/chromedriver", "/usr/bin/chromedriver"]
+
+      driver_path = driver_paths.each do |path|
+        break path if File.executable? path
+      end
+
+      if driver_path.nil?
+        STDERR.puts "#{driver_paths.join(" or ")} not exists! Please install correct version Selenium driver for Chrome before continue, exit ..."
         exit
       end
       service = Selenium::Service.chrome(driver_path: driver_path)

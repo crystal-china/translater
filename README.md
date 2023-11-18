@@ -9,7 +9,9 @@
 translater 会启动一个 headless 模式的浏览器内核（Firefox/Chrome) 随机访问上面的一个翻译网站获取翻译, 
 默认使用 Chrome 内核, 因此要求系统必须已安装 Chrome.
 
-从 v0.4.8 版本开始，translater 不再为用户自动安装 Chrome Selenium driver(chromedriver)，用户需自己下载，并拷贝至 /usr/local/bin.
+从 v0.4.8 版本开始，translater 不再为用户自动安装 Chrome Selenium driver(chromedriver).
+作为用户，你必须确保安装正确匹配版本的 chrome/chromium 与 chromedriver.
+你可以使用系统包管理安装 chromedriver, 或自己下载，并拷贝至 /usr/local/bin.
 
 v0.3.0 版本引入了一个小数据库，会记录每次不同引擎翻译的耗时，用来分析那个翻译引擎速度快一些。
 
