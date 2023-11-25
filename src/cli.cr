@@ -78,8 +78,7 @@ USAGE
     value = Browser.parse?(b)
 
     if value.nil?
-      STDERR.puts "Supported options: #{Browser.names.map(&.downcase).join ", "}"
-      exit 1
+      abort "Supported options: #{Browser.names.map(&.downcase).join ", "}"
     else
       browser = value
     end
@@ -98,8 +97,7 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
       if (engine = Engine.parse?(input))
         engine_list << engine
       else
-        STDERR.puts "Supported options: #{Engine.names.map(&.downcase).join ", "}"
-        exit 1
+        abort "Supported options: #{Engine.names.map(&.downcase).join ", "}"
       end
     end
   end
@@ -133,12 +131,10 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
   parser.unknown_args do |args|
     if !STDIN.info.type.pipe?
       if args.empty?
-        STDERR.puts "Please specify translate content. e.g. translater 'hello, China!'"
-        exit 1
+        abort "Please specify translate content. e.g. translater 'hello, China!'"
       else
         if args.first.blank?
-          STDERR.puts "Translate content must be present. e.g. translater 'hello, China!'"
-          exit 1
+          abort "Translate content must be present. e.g. translater 'hello, China!'"
         end
 
         content = args.first.strip
@@ -192,29 +188,26 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
         STDERR.puts "Initialize profile dbs done."
       end
     end
+
     exit
   end
 
   parser.on("-h", "--help", "Show this help message and exit") do
-    STDERR.puts parser
-    exit
+    abort parser
   end
 
   parser.on("-v", "--version", "Show version") do
-    STDERR.puts Translater::VERSION
-    exit
+    abort Translater::VERSION
   end
 
   parser.invalid_option do |flag|
     STDERR.puts "Invalid option: #{flag}.\n\n"
-    STDERR.puts parser
-    exit 1
+    abort parser
   end
 
   parser.missing_option do |flag|
     STDERR.puts "Missing option for #{flag}\n\n"
-    STDERR.puts parser
-    exit 1
+    abort parser
   end
 end
 
@@ -227,8 +220,7 @@ if target_language.nil?
 end
 
 if !File.exists?(DB_FILE.split(':')[1]) && debug_mode == false
-  STDERR.puts "Run `translater --profile' first."
-  exit 1
+  abort "Run `translater --profile' first."
 end
 
 Translater.new(

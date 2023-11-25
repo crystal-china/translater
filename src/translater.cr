@@ -12,8 +12,7 @@ class Translater
       end
 
       if driver_path.nil?
-        STDERR.puts "#{driver_paths.join(" or ")} not exists! Please install correct version Selenium driver for Firefox before continue, exit ..."
-        exit
+        abort "#{driver_paths.join(" or ")} not exists! Please install correct version Selenium driver for Firefox before continue, exit ..."
       end
 
       service = Selenium::Service.firefox(driver_path: driver_path)
@@ -31,8 +30,7 @@ class Translater
       end
 
       if driver_path.nil?
-        STDERR.puts "#{driver_paths.join(" or ")} not exists! Please install correct version Selenium driver for Chrome before continue, exit ..."
-        exit
+        abort "#{driver_paths.join(" or ")} not exists! Please install correct version Selenium driver for Chrome before continue, exit ..."
       end
       service = Selenium::Service.chrome(driver_path: driver_path)
       driver = Selenium::Driver.for(:chrome, service: service)
@@ -45,7 +43,7 @@ class Translater
 
     {driver, capabilities}
   rescue
-    STDERR.puts "Failed, please check browser driver.
+    abort "Failed, please check browser driver.
 If it still doesn't work, try delete files under ~/.webrivers and try again."
   end
 
