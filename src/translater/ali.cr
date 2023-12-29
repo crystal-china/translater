@@ -3,15 +3,11 @@ class Translater
     def initialize(session, content, debug_mode, chan, start_time)
       session.navigate_to("https://translate.alibaba.com/")
 
-      sleep 0.2
-
       until (source_content_ele = session.find_by_selector("textarea#source"))
-        sleep 0.2
+        sleep 0.1
       end
 
       source_content_ele.click
-
-      sleep 0.2
 
       # ali only support at most three hundred words english to translate.
       # so split the translate content into chunk less than 300 words
@@ -37,11 +33,11 @@ class Translater
           Translater.input(source_content_ele, content)
 
           until result = session.find_by_selector("pre#pre")
-            sleep 0.2
+            sleep 0.1
           end
 
           while result.text.blank?
-            sleep 0.2
+            sleep 0.1
           end
 
           str << result.text
@@ -50,7 +46,7 @@ class Translater
           document_manager.execute_script(%{select = document.querySelector("textarea#source"); select.value = "";})
           document_manager.execute_script(%{select = document.querySelector("pre#pre"); select.innerText = "";})
 
-          sleep 0.2
+          sleep 0.1
         end
       end
 
