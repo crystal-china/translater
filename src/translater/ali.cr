@@ -32,7 +32,7 @@ class Translater
         chunked_content.each do |content|
           Translater.input(source_content_ele, content)
 
-          until result = session.find_by_selector("pre#pre")
+          until (result = session.find_by_selector("pre#pre"))
             sleep 0.1
           end
 

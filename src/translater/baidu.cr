@@ -17,8 +17,6 @@ class Translater
 
       source_content_ele.click
 
-      sleep 0.1
-
       Translater.input(source_content_ele, content, wait_seconds: 0.1)
 
       if debug_mode
@@ -26,7 +24,7 @@ class Translater
         gets
       end
 
-      until result = session.find_by_selector(".output-bd")
+      until (result = session.find_by_selector(".output-bd"))
         sleep 0.1
       end
 
