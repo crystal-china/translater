@@ -39,6 +39,13 @@ $: translater -e 'baidu' 'hello world!'
 从 [release 页面](https://github.com/crystal-china/translater/releases) 下载（单文件）最新版，
 扔到 $PATH 的文件夹里，目前支持 Linux 和 OSX.
 
+或者从源码编译安装：
+
+```sh
+$: make release
+$: sudo make install
+```
+
 ## Usage
 
 ```sh
