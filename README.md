@@ -40,7 +40,7 @@ $: translater -e 'baidu' 'hello world!'
 扔到 $PATH 的文件夹里，目前支持 Linux 和 OSX.
 
 或者从源码编译安装：
-
+《
 ```sh
 $: make release
 $: sudo make install
@@ -63,8 +63,6 @@ Hello, China!
 ## TODO
 
 1. 支持 Edge
-2. 替换 selenium.cr, 因为它不支持持久化浏览器的 session.
-   这带来的问题是，每一次翻译后，必须关闭浏览器，而下次翻译，必须再次启动浏览器，这耗费很多时间。
 
 ## Contributing
 
