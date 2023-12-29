@@ -2,6 +2,14 @@ require "selenium"
 require "./translater/**"
 
 class Translater
+  def ready?(driver)
+    begin
+      driver.status.ready?
+    rescue Socket::ConnectError
+      false
+    end
+  end
+
   def create_driver(browser, debug_mode)
     case browser
     in Browser::Firefox
@@ -23,17 +31,24 @@ class Translater
       capabilities = Selenium::Firefox::Capabilities.new
       capabilities.firefox_options = options
     in Browser::Chrome
-      driver_paths = ["/usr/local/bin/chromedriver", "/usr/bin/chromedriver"]
+      driver = Selenium::Driver.for(:chrome, base_url: "http://localhost:9515")
 
-      driver_path = driver_paths.each do |path|
-        break path if File.executable? path
+      if !ready?(driver)
+        driver_paths = ["/usr/local/bin/chromedriver", "/usr/bin/chromedriver"]
+
+        driver_path = driver_paths.each do |path|
+          break path if File.executable? path
+        end
+
+        if driver_path.nil?
+          abort "#{driver_paths.join(" or ")} not exists! Please install correct version Selenium driver for Chrome before continue, exit ..."
+        end
+
+        service = Selenium::Service.chrome(driver_path: driver_path)
+
+        driver = Selenium::Driver.for(:chrome, service: service)
       end
 
-      if driver_path.nil?
-        abort "#{driver_paths.join(" or ")} not exists! Please install correct version Selenium driver for Chrome before continue, exit ..."
-      end
-      service = Selenium::Service.chrome(driver_path: driver_path)
-      driver = Selenium::Driver.for(:chrome, service: service)
       options = Selenium::Chrome::Capabilities::ChromeOptions.new
       options.args = ["--headless"] unless debug_mode == true
 
@@ -115,9 +130,6 @@ If it still doesn't work, try delete files under ~/.webrivers and try again."
     rescue SQLite3::Exception
     rescue e
       e.inspect_with_backtrace(STDERR)
-    ensure
-      sleep 0.05
-      driver.stop if driver
     end
   end
 
