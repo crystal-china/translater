@@ -35,7 +35,7 @@ $(O): $(SRC_SOURCES) $(LIB_SOURCES) lib
 .PHONY: release
 release: ## Build release binary.
 release: lib
-	$(COMPILER) build $(RELEASE_FLAGS) $(ENTRY) -o $(O)
+	$(COMPILER) build $(RELEASE_FLAGS) -Dpreview_mt $(ENTRY) -o $(O)
 
 .PHONY: spec
 spec: ## Run spec suite.
