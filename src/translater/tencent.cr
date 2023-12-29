@@ -16,7 +16,7 @@ class Translater
       Translater.input(source_content_ele, content)
 
       if debug_mode
-        STDERR.puts "Press any key to continue ..."
+        STDERR.puts "Press ENTER key to continue ..."
         gets
       end
 
