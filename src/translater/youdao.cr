@@ -3,33 +3,23 @@ class Translater
     def initialize(session, content, debug_mode, chan, start_time)
       session.navigate_to("https://fanyi.youdao.com/index.html")
 
-      sleep 0.5
-
-      # while session.find_by_selector ".pop-up-comp"
-      #   until (element = session.find_by_selector ".pop-up-comp img.close")
-      #     sleep 0.2
-      #   end
-
-      #   element.click
-      # end
-
-      # sleep 0.2
-
-      while session.find_by_selector ".never-show"
-        until (element1 = session.find_by_selector ".never-show span")
-          sleep 0.2
-        end
-
-        element1.click
+      until (element = session.find_by_selector ".pop-up-comp img.close")
+        sleep 0.1
       end
 
+      element.click
+
+      until (element1 = session.find_by_selector "ul.nav_list :first-child")
+        sleep 0.1
+      end
+
+      element1.click
+
       until (source_content_ele = session.find_by_selector("#js_fanyi_input"))
-        sleep 0.2
+        sleep 0.1
       end
 
       source_content_ele.click
-
-      sleep 0.2
 
       Translater.input(source_content_ele, content)
 
@@ -38,12 +28,12 @@ class Translater
         gets
       end
 
-      until result = session.find_by_selector("#js_fanyi_output_resultOutput")
-        sleep 0.2
+      until (result = session.find_by_selector("#js_fanyi_output_resultOutput"))
+        sleep 0.1
       end
 
       while result.text.blank?
-        sleep 0.2
+        sleep 0.1
       end
 
       text = result.text
