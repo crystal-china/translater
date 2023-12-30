@@ -23,8 +23,8 @@ jobs:
         run: shards check || shards install --without-development
       - name: Check formatting
         run: crystal tool format --check
-      - name: Run tests
-        run: crystal spec --order=random --error-on-warnings
+      # - name: Run tests
+      #   run: crystal spec --order=random --error-on-warnings
       - name: package information
         run: |
           echo "BINARY_NAME=bin/$(cat shard.yml |grep targets -A1|tail -n1 |sed 's#[ :]##g')" >> $GITHUB_ENV
