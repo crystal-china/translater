@@ -63,9 +63,9 @@ If it still doesn't work, try delete files under ~/.webrivers and try again."
   def create_session(driver, capabilities)
     new_session = driver.create_session(capabilities)
 
-    # Clean Cookies
-    cookie_manager = Selenium::CookieManager.new(command_handler: new_session.command_handler, session_id: new_session.id)
-    cookie_manager.delete_all_cookies
+    # # Clean Cookies
+    # cookie_manager = Selenium::CookieManager.new(command_handler: new_session.command_handler, session_id: new_session.id)
+    # cookie_manager.delete_all_cookies
 
     new_session
   end
