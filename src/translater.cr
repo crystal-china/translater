@@ -3,11 +3,9 @@ require "./translater/**"
 
 class Translater
   def ready?(driver)
-    begin
-      driver.status.ready?
-    rescue Socket::ConnectError
-      false
-    end
+    driver.status.ready?
+  rescue Socket::ConnectError
+    false
   end
 
   def create_driver(browser, debug_mode)

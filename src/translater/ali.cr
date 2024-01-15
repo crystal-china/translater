@@ -16,9 +16,9 @@ class Translater
       original_ary = content.split(/,|\./)
       str = ""
 
-      chunked_ary = original_ary.chunk_while do |a, b|
-        str = str + a
-        if (str.size + b.size) > 290
+      chunked_ary = original_ary.chunk_while do |x, y|
+        str = str + x
+        if (str.size + y.size) > 290
           str = ""
           false
         else
@@ -28,9 +28,9 @@ class Translater
 
       chunked_content = chunked_ary.to_a.map(&.join)
 
-      text = String.build do |str|
-        chunked_content.each do |content|
-          Translater.input(source_content_ele, content)
+      text = String.build do |io|
+        chunked_content.each do |c|
+          Translater.input(source_content_ele, c)
 
           until (result = session.find_by_selector("pre#pre"))
             sleep 0.1
@@ -40,8 +40,8 @@ class Translater
             sleep 0.1
           end
 
-          str << result.text
-          str << ", "
+          io << result.text
+          io << ", "
 
           document_manager.execute_script(%{select = document.querySelector("textarea#source"); select.value = "";})
           document_manager.execute_script(%{select = document.querySelector("pre#pre"); select.innerText = "";})
