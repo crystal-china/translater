@@ -119,6 +119,7 @@ If it still doesn't work, try delete files under ~/.webrivers and try again."
         end
       end
     rescue SQLite3::Exception
+      STDERR.puts "Insert to table on #{DB_FILE} failed, try delete it and retry."
     rescue e
       e.inspect_with_backtrace(STDERR)
     end
