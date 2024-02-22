@@ -82,22 +82,22 @@ If it still doesn't work, try delete files under ~/.webrivers and try again."
 
       print "Using "
 
-      if engine_list.includes? Engine::Youdao
+      if engine_list.includes? "Youdao"
         print "Youdao "
         spawn Youdao.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
       end
 
-      if engine_list.includes? Engine::Tencent
+      if engine_list.includes? "Tencent"
         print "Tencent "
         spawn Tencent.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
       end
 
-      if engine_list.includes? Engine::Ali
+      if engine_list.includes? "Ali"
         print "Ali "
         spawn Ali.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
       end
 
-      if engine_list.includes? Engine::Baidu
+      if engine_list.includes? "Baidu"
         print "Baidu "
         spawn Baidu.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
       end

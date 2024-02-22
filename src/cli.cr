@@ -38,7 +38,7 @@ enum Browser
 end
 
 enum Engine
-  Youdao
+  # Youdao
   Tencent
   Ali
   Baidu
@@ -48,7 +48,7 @@ target_language : TargetLanguage? = nil
 debug_mode = false
 content = ""
 browser = Browser::Chrome
-engine_list = Engine.values.shuffle![0..0]
+engine_list = Engine.names.shuffle![0..0]
 timeout_seconds : Int32 = 10
 
 stdin = [] of String
@@ -87,15 +87,15 @@ USAGE
   parser.on(
     "-e ENGINE",
     "--engine=ENGINE",
-    "Specify engine used for translate, support youdao,tencent,ali,baidu.
-multi-engine is possible, split it with comma, e.g. -e youdao,tencent
+    "Specify engine used for translate, support #{Engine.names.map(&.downcase)}.
+multi-engine is possible, joined with comma, e.g. -e youdao,tencent
 ") do |e|
     inputs = e.split(",")
-    engine_list = [] of Engine
+    engine_list = [] of String
 
     inputs.each do |input|
       if (engine = Engine.parse?(input))
-        engine_list << engine
+        engine_list << engine.to_s
       else
         abort "Supported options: #{Engine.names.map(&.downcase).join ", "}"
       end
@@ -110,7 +110,9 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
       db.query "select name from fastest_engine limit 1;" do |rs|
         rs.each do
           # If fastest_engine is empty, this block will be ignored.
-          engine_list = [Engine.parse(rs.read(String))]
+          if engine = Engine.parse(rs.read(String))
+            engine_list = [engine.to_s]
+          end
         end
       end
     end
@@ -119,7 +121,7 @@ multi-engine is possible, split it with comma, e.g. -e youdao,tencent
   parser.on(
     "-A",
     "Use all known engine for translate, can be used for profile purpose.") do
-    engine_list = Engine.values
+    engine_list = Engine.names
   end
 
   parser.on(
