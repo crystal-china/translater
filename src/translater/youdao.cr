@@ -1,6 +1,3 @@
-require "meta"
-require "fiber_debug"
-
 class Translater
   class Youdao
     def initialize(session, content, debug_mode, chan, start_time)
