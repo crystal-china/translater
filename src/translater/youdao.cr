@@ -1,15 +1,20 @@
+require "meta"
+require "fiber_debug"
+
 class Translater
   class Youdao
     def initialize(session, content, debug_mode, chan, start_time)
-      session.navigate_to("https://fanyi.youdao.com/index.html")
+      session.navigate_to("https://fanyi.youdao.com/index.html#")
 
-      until (element = session.find_by_selector ".pop-up-comp img.close")
-        sleep 0.1
+      while session.find_by_selector ".pop-up-comp"
+        until (element = session.find_by_selector ".pop-up-comp img.close")
+          sleep 0.1
+        end
+
+        element.click
       end
 
-      element.click
-
-      until (element1 = session.find_by_selector "ul.nav_list :first-child")
+      until (element1 = session.find_by_selector "div.tab-item.active span.color_text_1")
         sleep 0.1
       end
 
