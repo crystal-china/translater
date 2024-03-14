@@ -42,6 +42,7 @@ enum Engine
   Tencent
   Ali
   Baidu
+  # Volc
 end
 
 target_language : TargetLanguage? = nil

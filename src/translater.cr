@@ -102,6 +102,11 @@ If it still doesn't work, try delete files under ~/.webrivers and try again."
         spawn Baidu.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
       end
 
+      if engine_list.includes? "Volc"
+        print "Volc "
+        spawn Volc.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
+      end
+
       puts
 
       DB.open DB_FILE do |db|

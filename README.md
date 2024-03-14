@@ -93,6 +93,7 @@ $: translater -e 'baidu' 'hello world!'
 ## TODO
 
 1. 支持 Edge
+2. 当使用 selenium 启动一个浏览器进程并访问火山翻译主页时, 甚至手动输入翻译内容也不工作.
 
 ## Contributing
 
