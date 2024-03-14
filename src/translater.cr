@@ -48,7 +48,7 @@ class Translater
       end
 
       options = Selenium::Chrome::Capabilities::ChromeOptions.new
-      options.args = ["--headless"] unless debug_mode == true
+      options.args = ["--headless=new"] unless debug_mode == true
 
       capabilities = Selenium::Chrome::Capabilities.new
       capabilities.chrome_options = options
