@@ -9,6 +9,8 @@ class Translater
   end
 
   def create_driver(browser, debug_mode)
+    user_agent = "Mozilla/5.0 (X11; Linux x86_64; rv:124.0) Gecko/20100101 Firefox/124.0"
+
     case browser
     in Browser::Firefox
       driver_paths = ["/usr/local/bin/geckodriver", "/usr/bin/geckodriver"]
@@ -48,7 +50,7 @@ class Translater
       end
 
       options = Selenium::Chrome::Capabilities::ChromeOptions.new
-      options.args = ["--headless=new"] unless debug_mode == true
+      options.args = ["--headless=new", %{--user-agent="{user_agent}"}] unless debug_mode == true
 
       capabilities = Selenium::Chrome::Capabilities.new
       capabilities.chrome_options = options
