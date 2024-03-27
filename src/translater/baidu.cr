@@ -3,23 +3,33 @@ class Translater
     def initialize(session, content, debug_mode, chan, start_time)
       session.navigate_to("https://fanyi.baidu.com/")
 
-      while session.find_by_selector ".desktop-guide"
-        until (element = session.find_by_selector "a.desktop-guide-close")
-          sleep 0.1
-        end
+      # while session.find_by_selector ".desktop-guide"
+      #   until (element = session.find_by_selector "a.desktop-guide-close")
+      #     sleep 0.1
+      #   end
 
+      #   element.click
+      # end
+
+      while (element = session.find_by_selector "div[style*=\"display: block;\"][style^=\"background-color\"]>div>div>span")
         element.click
+
+        sleep 0.1
       end
 
-      while session.find_by_selector "#app-guide"
-        until (element = session.find_by_selector "span.app-guide-close")
-          sleep 0.1
-        end
+      # while session.find_by_selector "#app-guide"
+      #   until (element = session.find_by_selector "span.app-guide-close")
+      #     sleep 0.1
+      #   end
 
-        element.click
-      end
+      #   element.click
+      # end
 
-      until (source_content_ele = session.find_by_selector("textarea#baidu_translate_input"))
+      # until (source_content_ele = session.find_by_selector("textarea#baidu_translate_input"))
+      #   sleep 0.1
+      # end
+
+      until (source_content_ele = session.find_by_selector("div[data-slate-node=\"element\""))
         sleep 0.1
       end
 
@@ -32,7 +42,11 @@ class Translater
         gets
       end
 
-      until (result = session.find_by_selector(".output-bd"))
+      # until (result = session.find_by_selector(".output-bd"))
+      #   sleep 0.1
+      # end
+
+      until (result = session.find_by_selector("span[disabled][spellcheck=\"false\"]"))
         sleep 0.1
       end
 
