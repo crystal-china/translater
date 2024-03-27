@@ -50,7 +50,11 @@ class Translater
       end
 
       options = Selenium::Chrome::Capabilities::ChromeOptions.new
-      options.args = ["--headless=new", %{--user-agent="{user_agent}"}] unless debug_mode == true
+      options.args = [
+        "--headless=new",
+        %{--user-agent="#{user_agent}"},
+        "--use-mobile-user-agent",
+      ] unless debug_mode == true
 
       capabilities = Selenium::Chrome::Capabilities.new
       capabilities.chrome_options = options
