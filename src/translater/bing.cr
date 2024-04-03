@@ -1,6 +1,7 @@
 class Translater
   class Bing
-    def initialize(session, content, debug_mode, chan, start_time)
+    def initialize(browser, content, debug_mode, chan, start_time)
+      session, driver = Translater.create_driver(browser, debug_mode).not_nil!
       session.navigate_to("https://www.bing.com/translator")
 
       document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
@@ -34,10 +35,11 @@ class Translater
         sleep 0.2
       end
 
-      chan.send({result, self.class.name.split(":")[-1], Time.monotonic - start_time})
+      chan.send({result, self.class.name.split(":")[-1], Time.monotonic - start_time, browser})
     rescue Socket::ConnectError
     ensure
-      session.delete
+      session.delete if session
+      # driver.stop if driver
     end
   end
 end

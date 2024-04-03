@@ -38,8 +38,8 @@ enum Browser
 end
 
 enum Engine
-  # Youdao
-  # Tencent
+  Youdao
+  Tencent
   Ali
   Baidu
   # Volc
@@ -89,7 +89,7 @@ USAGE
   parser.on(
     "-e ENGINE",
     "--engine=ENGINE",
-    "Specify engine used for translate, support #{Engine.names.map(&.downcase)}.
+    "Specify engine used for translate, support #{Engine.names.map(&.downcase).join(", ")}.
 multi-engine is possible, joined with comma, e.g. -e youdao,tencent
 ") do |e|
     inputs = e.split(",")
@@ -120,11 +120,11 @@ multi-engine is possible, joined with comma, e.g. -e youdao,tencent
     end
   end
 
-  parser.on(
-    "-A",
-    "Use all known engine for translate, can be used for profile purpose.") do
-    engine_list = Engine.names
-  end
+  # parser.on(
+  #   "-A",
+  #   "Use all known engine for translate, can be used for profile purpose.") do
+  #   engine_list = Engine.names
+  # end
 
   parser.on(
     "--timeout=SECONDS",

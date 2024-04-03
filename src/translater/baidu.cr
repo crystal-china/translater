@@ -1,6 +1,7 @@
 class Translater
   class Baidu
-    def initialize(session, content, debug_mode, chan, start_time)
+    def initialize(browser, content, debug_mode, chan, start_time)
+      session, driver = Translater.create_driver(browser, debug_mode).not_nil!
       session.navigate_to("https://fanyi.baidu.com/")
 
       # while session.find_by_selector ".desktop-guide"
@@ -56,10 +57,11 @@ class Translater
 
       text = result.text
 
-      chan.send({text, self.class.name.split(":")[-1], Time.monotonic - start_time})
+      chan.send({text, self.class.name.split(":")[-1], Time.monotonic - start_time, browser})
     rescue Socket::ConnectError
     ensure
-      session.delete
+      session.delete if session
+      # driver.stop if driver
     end
   end
 end
