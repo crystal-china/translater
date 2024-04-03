@@ -57,8 +57,8 @@ stdin = [] of String
 
 # FIXME: Don't know why, run spec on github action, cause #pipe? return true.
 if STDIN.info.type.pipe?
-  while (_input = STDIN.gets)
-    stdin << _input
+  while (input = STDIN.gets)
+    stdin << input
   end
   content = stdin.join("\n").strip
 

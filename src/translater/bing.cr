@@ -12,7 +12,7 @@ class Translater
 
       case content
       when /[0-9a-zA-Z[:space:][:punct:]]/
-        # 如果输入内容是英文
+        # 如果输入内容是英文, 修改目标语言为中文
         document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl"); select.value = "zh-Hans"})
       end
 
