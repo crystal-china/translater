@@ -3,7 +3,7 @@ require "./translater"
 require "db"
 require "sqlite3"
 
-DB_FILE_NAME         = "profile.db"
+DB_FILE_NAME         = "translater_profile.db"
 DB_DEFAULT_FILE_PATH = Path["~/.#{DB_FILE_NAME}"].expand(home: true)
 
 def find_db_path
