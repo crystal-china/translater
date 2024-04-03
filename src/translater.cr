@@ -53,6 +53,7 @@ class Translater
       options.args = [
         "--headless=new",
         %{--user-agent="#{user_agent}"},
+        "--no-sandbox",
         "--use-mobile-user-agent",
       ] unless debug_mode == true
 
@@ -111,6 +112,11 @@ If it still doesn't work, try delete files under ~/.webrivers and try again."
       if engine_list.includes? "Volc"
         print "Volc "
         spawn Volc.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
+      end
+
+      if engine_list.includes? "Bing"
+        print "Bing "
+        spawn Bing.new(create_session(driver, capabilities), content, debug_mode, chan, start_time)
       end
 
       puts

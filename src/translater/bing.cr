@@ -1,39 +1,43 @@
-# def self.bing_translater(session, content, debug_mode, target_language)
-#   session.navigate_to("https://www.bing.com/translator")
+class Translater
+  class Bing
+    def initialize(session, content, debug_mode, chan, start_time)
+      session.navigate_to("https://www.bing.com/translator")
 
-#   # until (source_content_ele = session.find_by_selector("select#tta_tgtsl optgroup#t_tgtRecentLang option"))
-#   #   sleep 0.2
-#   # end
+      document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
 
-#   until source_content_ele = session.find_by_selector("textarea#tta_input_ta")
-#     sleep 0.2
-#   end
+      until source_content_ele = session.find_by_selector("textarea#tta_input_ta")
+        sleep 0.2
+      end
 
-#   source_content_ele.click
+      until session.find_by_selector("select#tta_tgtsl")
+        sleep 0.2
+      end
 
-#   sleep 0.2
+      case content
+      when /[0-9a-zA-Z[:space:][:punct:]]/
+        # 如果输入内容是英文
+        document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl"); select.value = "zh-Hans"})
+      end
 
-#   input(source_content_ele, content)
+      source_content_ele.click
 
-#   document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
+      Translater.input(source_content_ele, content, wait_seconds: 0.1)
 
-#   case target_language
-#   in TargetLanguage::English
-#     document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "en"})
-#   in TargetLanguage::Chinese
-#     -      document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl optgroup#t_tgtRecentLang option"); select.value = "zh-Hans"})
-#     -    end
+      if debug_mode
+        STDERR.puts "Press ENTER key to continue ..."
+        gets
+      end
 
-#   if debug_mode
-#     STDERR.puts "Press ENTER key to continue ..."
-#     gets
-#   end
+      while result = document_manager.execute_script(%{return document.querySelector("textarea#tta_output_ta").value})
+        break unless result.strip == "..."
 
-#   while result = document_manager.execute_script(%{return document.querySelector("textarea#tta_output_ta").value})
-#     break unless result.strip == "..."
+        sleep 0.2
+      end
 
-#     sleep 0.2
-#   end
-
-#   puts "---------------Bing---------------\n#{result}"
-# end
+      chan.send({result, self.class.name.split(":")[-1], Time.monotonic - start_time})
+    rescue Socket::ConnectError
+    ensure
+      session.delete
+    end
+  end
+end

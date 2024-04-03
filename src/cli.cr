@@ -43,6 +43,7 @@ enum Engine
   Ali
   Baidu
   # Volc
+  Bing
 end
 
 target_language : TargetLanguage? = nil
