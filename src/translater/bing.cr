@@ -1,18 +1,14 @@
 class Translater
   class Bing
     def initialize(browser, content, debug_mode, chan, start_time)
-      session, driver = Translater.create_driver(browser, debug_mode).not_nil!
+      session, _driver = Translater.create_driver(browser, debug_mode).not_nil!
       session.navigate_to("https://www.bing.com/translator")
 
       document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
 
-      until source_content_ele = session.find_by_selector("textarea#tta_input_ta")
-        sleep 0.2
-      end
+      source_content_ele = session.find_by_selector_timeout("textarea#tta_input_ta", timeout: 1)
 
-      until session.find_by_selector("select#tta_tgtsl")
-        sleep 0.2
-      end
+      session.find_by_selector_timeout("select#tta_tgtsl")
 
       case content
       when /[0-9a-zA-Z[:space:][:punct:]]/
@@ -32,7 +28,7 @@ class Translater
       while result = document_manager.execute_script(%{return document.querySelector("textarea#tta_output_ta").value})
         break unless result.strip == "..."
 
-        sleep 0.2
+        sleep 0.1
       end
 
       chan.send({result, self.class.name.split(":")[-1], Time.monotonic - start_time, browser})

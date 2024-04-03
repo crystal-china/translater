@@ -1,12 +1,10 @@
 class Translater
   class Tencent
     def initialize(browser, content, debug_mode, chan, start_time)
-      session, driver = Translater.create_driver(browser, debug_mode).not_nil!
+      session, _driver = Translater.create_driver(browser, debug_mode).not_nil!
       session.navigate_to("https://fanyi.qq.com/")
 
-      until (source_content_ele = session.find_by_selector(".textpanel-source.active .textpanel-source-textarea textarea.textinput"))
-        sleep 0.1
-      end
+      source_content_ele = session.find_by_selector_timeout(".textpanel-source.active .textpanel-source-textarea textarea.textinput", timeout: 1)
 
       source_content_ele.click
 
@@ -17,9 +15,7 @@ class Translater
         gets
       end
 
-      until (result = session.find_by_selector(".textpanel-target-textblock"))
-        sleep 0.1
-      end
+      result = session.find_by_selector_timeout(".textpanel-target-textblock", timeout: 2)
 
       while result.text.blank?
         sleep 0.1

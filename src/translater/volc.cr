@@ -1,7 +1,7 @@
 class Translater
   class Volc
     def initialize(browser, content, debug_mode, chan, start_time)
-      session, driver = Translater.create_driver(browser, debug_mode).not_nil!
+      session, _driver = Translater.create_driver(browser, debug_mode).not_nil!
       session.navigate_to("https://translate.volcengine.com")
 
       document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
@@ -69,13 +69,9 @@ Object.defineProperty(HTMLDivElement.prototype, 'offsetHeight', {
 });
 HEREDOC
 
-      until session.find_by_selector "span[data-slate-placeholder=\"true\"]"
-        sleep 0.1
-      end
+      session.find_by_selector_timeout "span[data-slate-placeholder=\"true\"]", timeout: 1
 
-      until (source_content_ele = session.find_by_selector %{div.slate-editor[contenteditable="true"]})
-        sleep 0.1
-      end
+      source_content_ele = session.find_by_selector_timeout(%{div.slate-editor[contenteditable="true"]})
 
       source_content_ele.click
 
@@ -86,9 +82,7 @@ HEREDOC
         gets
       end
 
-      until (result = session.find_by_selector "span[data-slate-string=\"true\"]")
-        sleep 0.1
-      end
+      result = session.find_by_selector_timeout(%{span[data-slate-string="true"]}, timeout: 2)
 
       while result.text.blank?
         sleep 0.1

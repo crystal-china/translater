@@ -16,3 +16,7 @@ shards:
     git: https://github.com/crystal-lang/crystal-sqlite3.git
     version: 0.21.0
 
+  timeout:
+    git: https://github.com/wyhaines/timeout.cr.git
+    version: 0.1.0+git.commit.130d8893f5222ebaed06f743a3bdad7f6b2a7be7
+

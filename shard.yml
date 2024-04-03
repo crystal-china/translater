@@ -17,6 +17,8 @@ dependencies:
 development_dependencies:
   ameba:
     github: crystal-ameba/ameba
+  timeout:
+    github: wyhaines/timeout.cr
 
 crystal: 1.8.0
 

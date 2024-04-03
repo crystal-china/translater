@@ -1,7 +1,7 @@
 class Translater
   class Baidu
     def initialize(browser, content, debug_mode, chan, start_time)
-      session, driver = Translater.create_driver(browser, debug_mode).not_nil!
+      session, _driver = Translater.create_driver(browser, debug_mode).not_nil!
       session.navigate_to("https://fanyi.baidu.com/")
 
       # while session.find_by_selector ".desktop-guide"
@@ -12,11 +12,7 @@ class Translater
       #   element.click
       # end
 
-      while (element = session.find_by_selector "div[style*=\"display: block;\"][style^=\"background-color\"]>div>div>span")
-        element.click
-
-        sleep 0.1
-      end
+      session.find_by_selector_timeout("div[style*=\"display: block;\"][style^=\"background-color\"]>div>div>span", timeout: 1).click
 
       # while session.find_by_selector "#app-guide"
       #   until (element = session.find_by_selector "span.app-guide-close")
@@ -30,9 +26,7 @@ class Translater
       #   sleep 0.1
       # end
 
-      until (source_content_ele = session.find_by_selector("div[data-slate-node=\"element\""))
-        sleep 0.1
-      end
+      source_content_ele = session.find_by_selector_timeout "div[data-slate-node=\"element\"", timeout: 0.5
 
       source_content_ele.click
 
@@ -43,13 +37,9 @@ class Translater
         gets
       end
 
-      # until (result = session.find_by_selector(".output-bd"))
-      #   sleep 0.1
-      # end
+      # result = session.find_by_selector_timeout(".output-bd")
 
-      until (result = session.find_by_selector("span[disabled][spellcheck=\"false\"]"))
-        sleep 0.1
-      end
+      result = session.find_by_selector_timeout "span[disabled][spellcheck=\"false\"]", timeout: 2
 
       while result.text.blank?
         sleep 0.1

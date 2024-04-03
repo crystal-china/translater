@@ -1,13 +1,10 @@
 class Translater
   class Ali
     def initialize(browser, content, debug_mode, chan, start_time)
-      session, driver = Translater.create_driver(browser, debug_mode).not_nil!
+      session, _driver = Translater.create_driver(browser, debug_mode).not_nil!
       session.navigate_to("https://translate.alibaba.com/")
 
-      until (source_content_ele = session.find_by_selector("textarea#source"))
-        sleep 0.1
-      end
-
+      source_content_ele = session.find_by_selector_timeout("textarea#source", timeout: 1)
       source_content_ele.click
 
       # ali only support at most three hundred words english to translate.
@@ -33,9 +30,7 @@ class Translater
         chunked_content.each do |c|
           Translater.input(source_content_ele, c)
 
-          until (result = session.find_by_selector("pre#pre"))
-            sleep 0.1
-          end
+          result = session.find_by_selector_timeout("pre#pre", timeout: 2)
 
           while result.text.blank?
             sleep 0.1
