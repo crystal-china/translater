@@ -1,4 +1,5 @@
 require "selenium"
+require "./driver"
 require "./translater/**"
 
 class Translater
@@ -11,46 +12,17 @@ class Translater
   def self.create_driver(browser, debug_mode)
     case browser
     in Browser::Firefox
-      driver = Selenium::Driver.for(:firefox, base_url: "http://localhost:4444")
-
-      if !ready?(driver)
-        driver_paths = ["/usr/local/bin/geckodriver", "/usr/bin/geckodriver"]
-
-        driver_path = driver_paths.each do |path|
-          break path if File.executable? path
-        end
-
-        if driver_path.nil?
-          abort "#{driver_paths.join(" or ")} not exists! Please install correct version Selenium driver for Firefox before continue, exit ..."
-        end
-
-        service = Selenium::Service.firefox(driver_path: driver_path)
-        driver = Selenium::Driver.for(:firefox, service: service)
-      end
+      driver = Translater::Driver.for(:firefox, base_url: "http://localhost:4444")
 
       options = Selenium::Firefox::Capabilities::FirefoxOptions.new
-      options.args = ["--headless"] unless debug_mode == true
+      options.args = [
+        "--headless",
+      ] unless debug_mode == true
 
       capabilities = Selenium::Firefox::Capabilities.new
       capabilities.firefox_options = options
     in Browser::Chrome
-      driver = Selenium::Driver.for(:chrome, base_url: "http://localhost:9515")
-
-      if !ready?(driver)
-        driver_paths = ["/usr/local/bin/chromedriver", "/usr/bin/chromedriver"]
-
-        driver_path = driver_paths.each do |path|
-          break path if File.executable? path
-        end
-
-        if driver_path.nil?
-          abort "#{driver_paths.join(" or ")} not exists! Please install correct version Selenium driver for Chrome before continue, exit ..."
-        end
-
-        service = Selenium::Service.chrome(driver_path: driver_path)
-
-        driver = Selenium::Driver.for(:chrome, service: service)
-      end
+      driver = Translater::Driver.for(:chrome, base_url: "http://localhost:9515")
 
       options = Selenium::Chrome::Capabilities::ChromeOptions.new
       options.args = [
