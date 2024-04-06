@@ -94,7 +94,9 @@ If it still doesn't work, try delete files under ~/.webrivers and try again."
 
       puts
 
-      DB.open DB_FILE do |db|
+      begin
+        db = DB.open(DB_FILE) if db_exists?
+
         engine_list.size.times do
           select
           when result = chan.receive
@@ -102,14 +104,16 @@ If it still doesn't work, try delete files under ~/.webrivers and try again."
             elapsed_seconds = sprintf("%.2f", time_span.total_seconds)
 
             puts "---------------#{engine_name} use #{browser}, spent #{elapsed_seconds} seconds---------------\n#{translated_text}"
-            db.exec "insert into #{engine_name.underscore} (elapsed_seconds) values (?)", elapsed_seconds.to_f
+            db.exec "insert into #{engine_name.underscore} (elapsed_seconds) values (?)", elapsed_seconds.to_f if db
           when timeout timeout_seconds.seconds
             STDERR.puts "Timeout!"
           end
+        ensure
+          db.close if db
         end
       end
     rescue SQLite3::Exception
-      STDERR.puts "Insert to table on #{DB_FILE} failed, try delete it and retry."
+      STDERR.puts "Visit db file #{DB_FILE} failed, try delete it and retry."
     rescue e
       e.inspect_with_backtrace(STDERR)
     end

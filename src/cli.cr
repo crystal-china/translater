@@ -25,6 +25,11 @@ def find_db_path
   DB_DEFAULT_FILE_PATH
 end
 
+def db_exists?
+  File.exists?(DB_FILE.split(':')[1])
+end
+
+# 这个为什么工作呢? 常量不是编译时生成的吗?
 DB_FILE = "sqlite3:#{find_db_path}"
 
 enum TargetLanguage
@@ -67,152 +72,171 @@ else
   ARGV << "--help" if ARGV.empty?
 end
 
-OptionParser.parse do |parser|
-  parser.banner = <<-USAGE
+begin
+  OptionParser.parse do |parser|
+    parser.banner = <<-USAGE
 Usage: translater <option> content
 USAGE
 
-  parser.on(
-    "-b BROWSER",
-    "--browser=BROWSER",
-    "Specify browser used for scrap, support Firefox and Chrome, default is Chrome.
+    parser.on(
+      "-b BROWSER",
+      "--browser=BROWSER",
+      "Specify browser used for scrap, support Firefox and Chrome, default is Chrome.
 ") do |b|
-    value = Browser.parse?(b)
+      value = Browser.parse?(b)
 
-    if value.nil?
-      abort "Supported options: #{Browser.names.map(&.downcase).join ", "}"
-    else
-      browser = value
+      if value.nil?
+        abort "Supported options: #{Browser.names.map(&.downcase).join ", "}"
+      else
+        browser = value
+      end
     end
-  end
 
-  parser.on(
-    "-e ENGINE",
-    "--engine=ENGINE",
-    "Specify engine used for translate, support #{Engine.names.map(&.downcase).join(", ")}.
+    parser.on(
+      "-e ENGINE",
+      "--engine=ENGINE",
+      "Specify engine used for translate, support #{Engine.names.map(&.downcase).join(", ")}.
 multi-engine is possible, joined with comma, e.g. -e youdao,tencent
 ") do |e|
-    inputs = e.split(",")
-    engine_list = [] of String
+      inputs = e.split(",")
+      engine_list = [] of String
 
-    inputs.each do |input|
-      if (engine = Engine.parse?(input))
-        engine_list << engine.to_s
-      else
-        abort "Supported options: #{Engine.names.map(&.downcase).join ", "}"
-      end
-    end
-  end
-
-  parser.on(
-    "-a",
-    "--auto",
-    "Use the fastest engine instead random selection, check --profile for details.") do
-    DB.connect DB_FILE do |db|
-      db.query "select name from fastest_engine limit 1;" do |rs|
-        rs.each do
-          # If fastest_engine is empty, this block will be ignored.
-          if engine = Engine.parse(rs.read(String))
-            engine_list = [engine.to_s]
-          end
+      inputs.each do |input|
+        if (engine = Engine.parse?(input))
+          engine_list << engine.to_s
+        else
+          abort "Supported options: #{Engine.names.map(&.downcase).join ", "}"
         end
       end
     end
-  end
 
-  # parser.on(
-  #   "-A",
-  #   "Use all known engine for translate, can be used for profile purpose.") do
-  #   engine_list = Engine.names
-  # end
-
-  parser.on(
-    "--timeout=SECONDS",
-    "Specify timeout for get translate result, default is 10 seconds") do |seconds|
-    timeout_seconds = seconds.to_i
-  end
-
-  parser.unknown_args do |args|
-    if !STDIN.info.type.pipe?
-      if args.empty?
-        abort "Please specify translate content. e.g. translater 'hello, China!'"
-      else
-        if args.first.blank?
-          abort "Translate content must be present. e.g. translater 'hello, China!'"
-        end
-
-        content = args.first.strip
-      end
-    end
-  end
-
-  parser.on("-D", "--debug", "Debug mode, will disable browser headless mode, and pause for investigation.") do
-    debug_mode = true
-    timeout_seconds = 100000 # disable timeout if debug mode
-  end
-
-  parser.on("--profile", "Create profile dbs for translate engines, you need run this once before use translater.") do
-    engine_names = Engine.names.map(&.downcase)
-    if File.exists? DB_FILE.split(':')[1]
-      DB.connect DB_FILE do |db|
-        ary = [] of String
-
-        engine_names.each do |engine_name|
-          db.query "select avg(elapsed_seconds), count(elapsed_seconds) from #{engine_name};" do |rs|
+    parser.on(
+      "-a",
+      "--auto",
+      "Use the fastest engine instead random selection, check --profile for details.") do
+      if db_exists?
+        DB.connect DB_FILE do |db|
+          db.query "select name from fastest_engine limit 1;" do |rs|
             rs.each do
-              elapsed_seconds = sprintf("%.2f", rs.read(Float64))
-              ary.push "#{engine_name}: average spent #{elapsed_seconds} seconds for #{rs.read(Int64)} samples\n"
+              # If fastest_engine is empty, this block will be ignored.
+              if engine = Engine.parse(rs.read(String))
+                engine_list = [engine.to_s]
+              end
             end
           end
         end
-
-        ary.sort_by! &.[/[\d\.]+/].to_f64
-
-        fastest_engine = ary[0][/(\w+):/, 1]
-
-        db.exec("INSERT INTO fastest_engine (id,name) VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET name = ?;", 1, fastest_engine, fastest_engine)
-
-        puts ary.join
+      else
+        STDERR.puts "No db exists, ignore --auto option."
       end
-    else
-      DB.open DB_FILE do |db|
-        engine_names.each do |engine_name|
-          db.exec "create table if not exists #{engine_name} (
+    end
+
+    # parser.on(
+    #   "-A",
+    #   "Use all known engine for translate, can be used for profile purpose.") do
+    #   engine_list = Engine.names
+    # end
+
+    parser.on(
+      "--timeout=SECONDS",
+      "Specify timeout for get translate result, default is 10 seconds") do |seconds|
+      timeout_seconds = seconds.to_i
+    end
+
+    parser.unknown_args do |args|
+      if !STDIN.info.type.pipe?
+        if args.empty?
+          STDOUT.puts "Please specify translate content. e.g. translater 'hello, China!'"
+          exit 0
+        else
+          if args.first.blank?
+            abort "Translate content must be present. e.g. translater 'hello, China!'"
+          end
+
+          content = args.first.strip
+        end
+      end
+    end
+
+    parser.on("-D", "--debug", "Debug mode, will disable browser headless mode, and pause for investigation.") do
+      debug_mode = true
+      timeout_seconds = 100000 # disable timeout if debug mode
+    end
+
+    parser.on("--profile", "Create profile dbs for translate engines, you need run this once before use translater.") do
+      engine_names = Engine.names.map(&.downcase)
+      if db_exists?
+        DB.connect DB_FILE do |db|
+          ary = [] of String
+
+          engine_names.each do |engine_name|
+            db.query "select avg(elapsed_seconds), count(elapsed_seconds) from #{engine_name};" do |rs|
+              rs.each do
+                avg = rs.read(Float64?)
+                count = rs.read(Int64)
+
+                elapsed_seconds = if avg
+                                    sprintf("%.2f", avg)
+                                  else
+                                    "NA"
+                                  end
+
+                ary.push "#{engine_name}: average spent #{elapsed_seconds} seconds for #{count} samples\n"
+              end
+            end
+          end
+
+          ary.sort_by! &.[/[\d\.]+/].to_f64
+
+          fastest_engine = ary[0][/(\w+):/, 1]
+
+          db.exec("INSERT INTO fastest_engine (id,name) VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET name = ?;", 1, fastest_engine, fastest_engine)
+
+          puts ary.join
+        end
+      else
+        DB.open DB_FILE do |db|
+          engine_names.each do |engine_name|
+            db.exec "create table if not exists #{engine_name} (
             id INTEGER PRIMARY KEY,
             elapsed_seconds REAL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );"
-        end
+          end
 
-        db.exec "create table if not exists fastest_engine (
+          db.exec "create table if not exists fastest_engine (
             id INTEGER PRIMARY KEY,
             name TEXT
   );"
 
-        STDERR.puts "Initialize profile dbs done."
+          STDERR.puts "Initialize profile dbs done."
+        end
       end
+
+      exit
     end
 
-    exit
-  end
+    parser.on("-h", "--help", "Show this help message and exit") do
+      STDOUT.puts parser
+      exit 0
+    end
 
-  parser.on("-h", "--help", "Show this help message and exit") do
-    abort parser
-  end
+    parser.on("-v", "--version", "Show version") do
+      STDOUT.puts Translater::VERSION
+      exit 0
+    end
 
-  parser.on("-v", "--version", "Show version") do
-    abort Translater::VERSION
-  end
+    parser.invalid_option do |flag|
+      STDERR.puts "Invalid option: #{flag}.\n\n"
+      abort parser
+    end
 
-  parser.invalid_option do |flag|
-    STDERR.puts "Invalid option: #{flag}.\n\n"
-    abort parser
+    parser.missing_option do |flag|
+      STDERR.puts "Missing option for #{flag}\n\n"
+      abort parser
+    end
   end
-
-  parser.missing_option do |flag|
-    STDERR.puts "Missing option for #{flag}\n\n"
-    abort parser
-  end
+rescue SQLite3::Exception
+  STDERR.puts "Visit db file #{DB_FILE} failed, try delete it and retry."
 end
 
 if target_language.nil?
@@ -221,10 +245,6 @@ if target_language.nil?
   else
     target_language = TargetLanguage::Chinese
   end
-end
-
-if !File.exists?(DB_FILE.split(':')[1]) && debug_mode == false
-  abort "Run `translater --profile' first."
 end
 
 Translater.new(
