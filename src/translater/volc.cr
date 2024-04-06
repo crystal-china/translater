@@ -82,7 +82,7 @@ HEREDOC
         gets
       end
 
-      result = session.find_by_selector_timeout(%{span[data-slate-string="true"]}, timeout: 2)
+      result = session.find_by_selector_timeout(%{span[data-slate-string="true"]}, timeout: 3)
 
       while result.text.blank?
         sleep 0.1

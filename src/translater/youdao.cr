@@ -19,7 +19,7 @@ class Translater
         gets
       end
 
-      result = session.find_by_selector_timeout("#js_fanyi_output_resultOutput", timeout: 2)
+      result = session.find_by_selector_timeout("#js_fanyi_output_resultOutput", timeout: 3)
 
       while result.text.blank?
         sleep 0.1

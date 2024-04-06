@@ -30,7 +30,7 @@ class Translater
         chunked_content.each do |c|
           Translater.input(source_content_ele, c)
 
-          result = session.find_by_selector_timeout("pre#pre", timeout: 2)
+          result = session.find_by_selector_timeout "pre#pre", timeout: 3
 
           while result.text.blank?
             sleep 0.1

@@ -15,7 +15,7 @@ class Translater
         gets
       end
 
-      result = session.find_by_selector_timeout(".textpanel-target-textblock", timeout: 2)
+      result = session.find_by_selector_timeout(".textpanel-target-textblock", timeout: 3)
 
       while result.text.blank?
         sleep 0.1

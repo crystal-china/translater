@@ -22,7 +22,7 @@ class Translater
         gets
       end
 
-      result = session.find_by_selector_timeout "span[disabled][spellcheck=\"false\"]", timeout: 2
+      result = session.find_by_selector_timeout "span[disabled][spellcheck=\"false\"]", timeout: 3
 
       while result.text.blank?
         sleep 0.1
