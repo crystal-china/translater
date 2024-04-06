@@ -10,8 +10,7 @@ class Translater
 
       session.find_by_selector_timeout("select#tta_tgtsl")
 
-      case content
-      when /[0-9a-zA-Z[:space:][:punct:]]/
+      if !content.matches? /\p{Han}/
         # 如果输入内容是英文, 修改目标语言为中文
         document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl"); select.value = "zh-Hans"})
       end
