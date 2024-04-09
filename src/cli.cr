@@ -3,34 +3,37 @@ require "./translater"
 require "db"
 require "sqlite3"
 
-DB_FILE_NAME         = "translater_profile.db"
-DB_DEFAULT_FILE_PATH = Path["~/.#{DB_FILE_NAME}"].expand(home: true)
+XDG_DATA_HOME = Path[ENV.fetch("XDG_DATA_HOME", "~/.local/share")]
 
-def find_db_path
-  db_file_path = (Path["#{Process.executable_path.as(String)}/../.."] / DB_FILE_NAME).expand
-
-  return db_file_path if File.exists?(db_file_path)
-
-  xdg_data_home = ENV.fetch("XDG_DATA_HOME", "~/.local/share")
+def find_db_path(name)
+  default_path = (
+    XDG_DATA_HOME /
+    "translater" /
+    name
+  ).expand(home: true)
 
   db_file_paths = {
-    Path[xdg_data_home] / "translater" / DB_FILE_NAME,
+    default_path,
+    (Path["#{Process.executable_path.as(String)}/../.."] / name).expand,
+    Path["~/.#{name}"].expand(home: true),
   }
 
   db_file_paths.each do |path|
-    expanded_path = path.expand(home: true)
-    return expanded_path if File.exists?(expanded_path)
+    return path if File.exists?(path)
   end
 
-  DB_DEFAULT_FILE_PATH
+  Dir.mkdir_p(default_path.dirname)
+
+  default_path
 end
 
-def db_exists?
-  File.exists?(DB_FILE.split(':')[1])
-end
+PROFILE_DB_FILE = "sqlite3:#{find_db_path("profile.db")}"
+SESSION_DB_FILE = "sqlite3:#{find_db_path("session.db")}"
 
-# 这个为什么工作呢? 常量不是编译时生成的吗?
-DB_FILE = "sqlite3:#{find_db_path}"
+def profile_db_exists?
+  # TODO: 还要检测文件大小
+  File.exists?(PROFILE_DB_FILE.split(':')[1])
+end
 
 enum TargetLanguage
   Chinese
@@ -43,18 +46,17 @@ enum Browser
 end
 
 enum Engine
-  Youdao
-  Tencent
   Ali
   Baidu
-  # Volc
   Bing
+  Tencent
+  # Volc
+  Youdao
 end
 
-target_language : TargetLanguage? = nil
 debug_mode = false
 content = ""
-browser = Browser::Chrome
+browser = Browser::Firefox
 engine_list = Engine.names.shuffle![0..0]
 timeout_seconds : Int32 = 10
 
@@ -78,26 +80,27 @@ begin
 Usage: translater <option> content
 USAGE
 
-    parser.on(
-      "-b BROWSER",
-      "--browser=BROWSER",
-      "Specify browser used for scrap, support Firefox and Chrome, default is Chrome.
-") do |b|
-      value = Browser.parse?(b)
+    # parser.on(
+    #       "-b BROWSER",
+    #       "--browser=BROWSER",
+    #       "Specify browser used for scrap, support #{Browser.names.map(&.downcase).join(", ")}, default use Firefox.
+    # Only Firefox can be guaranteed.
+    # ") do |b|
+    #       value = Browser.parse?(b)
 
-      if value.nil?
-        abort "Supported options: #{Browser.names.map(&.downcase).join ", "}"
-      else
-        browser = value
-      end
-    end
+    #       if value.nil?
+    #         abort "Supported options: #{Browser.names.map(&.downcase).join ", "}"
+    #       else
+    #         browser = value
+    #       end
+    #     end
 
     parser.on(
       "-e ENGINE",
       "--engine=ENGINE",
       "Specify engine used for translate, support #{Engine.names.map(&.downcase).join(", ")}.
-multi-engine is possible, joined with comma, e.g. -e youdao,tencent
-") do |e|
+    multi-engine is possible, joined with comma, e.g. -e youdao,tencent
+    ") do |e|
       inputs = e.split(",")
       engine_list = [] of String
 
@@ -113,9 +116,9 @@ multi-engine is possible, joined with comma, e.g. -e youdao,tencent
     parser.on(
       "-a",
       "--auto",
-      "Use the fastest engine instead random selection, check --profile for details.") do
-      if db_exists?
-        DB.connect DB_FILE do |db|
+      "Prefer to use the fastest engine instead of select a random one, you need run --profile before this feature.") do
+      if profile_db_exists?
+        DB.connect PROFILE_DB_FILE do |db|
           db.query "select name from fastest_engine limit 1;" do |rs|
             rs.each do
               # If fastest_engine is empty, this block will be ignored.
@@ -162,10 +165,10 @@ multi-engine is possible, joined with comma, e.g. -e youdao,tencent
       timeout_seconds = 100000 # disable timeout if debug mode
     end
 
-    parser.on("--profile", "Create profile dbs for translate engines, you need run this once before use translater.") do
+    parser.on("--profile", "Create profile dbs for translate engines.") do
       engine_names = Engine.names.map(&.downcase)
-      if db_exists?
-        DB.connect DB_FILE do |db|
+      if profile_db_exists?
+        DB.connect PROFILE_DB_FILE do |db|
           ary = [] of String
 
           engine_names.each do |engine_name|
@@ -194,7 +197,7 @@ multi-engine is possible, joined with comma, e.g. -e youdao,tencent
           puts ary.join
         end
       else
-        DB.open DB_FILE do |db|
+        DB.connect PROFILE_DB_FILE do |db|
           engine_names.each do |engine_name|
             db.exec "create table if not exists #{engine_name} (
             id INTEGER PRIMARY KEY,
@@ -236,18 +239,16 @@ multi-engine is possible, joined with comma, e.g. -e youdao,tencent
     end
   end
 rescue SQLite3::Exception
-  STDERR.puts "Visit db file #{DB_FILE} failed, try delete it and retry."
+  STDERR.puts "Visit profile db file #{PROFILE_DB_FILE} failed, try delete it and retry."
 end
 
-if target_language.nil?
-  if content =~ /\p{Han}/
-    target_language = TargetLanguage::English
-  else
-    target_language = TargetLanguage::Chinese
-  end
+if content =~ /\p{Han}/
+  target_language = TargetLanguage::English
+else
+  target_language = TargetLanguage::Chinese
 end
 
-Translater.new(
+Translater.run(
   content: content,
   target_language: target_language,
   debug_mode: debug_mode,

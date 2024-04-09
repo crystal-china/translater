@@ -11,7 +11,7 @@ class Translater
         driver_binary = "chromedriver"
       {% end %}
 
-      if !ready?(driver)
+      if !chrome_ready?(driver)
         driver_paths = ["/usr/local/bin/#{driver_binary}", "/usr/bin/#{driver_binary}"]
 
         driver_path = driver_paths.each do |path|

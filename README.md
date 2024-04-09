@@ -1,41 +1,62 @@
 # translater
 
-基于多个翻译引擎的整句翻译命令行工具。
+基于多个翻译引擎的整句翻译命令行工具，支持有道翻译、腾讯翻译君、阿里翻译、百度翻译、必应翻译，无需翻墙哦！
 
-当前支持的翻译引擎：有道翻译、腾讯翻译君、阿里翻译、百度翻译，无需翻墙哦！
+适合中英文整句互译，如果需要单词翻译工具，以及详细的单词释义，这个不适合你。
 
-特点：
-
-1. 适合中英文整句翻译，如果需要单词翻译工具，以及详细的单词释义，这个不适合你。
-2. 多个引擎并行同时翻译，见下面的例子。
-
+会根据要翻译的语言自动判断，只支持中英互译。
 
 ```sh
- ╰─ $ ./bin/translater -A '那些杀不死你的，终将使你变得更强大'
-Using Youdao Tencent Ali Baidu 
----------------Tencent, spent 4.52 seconds---------------
-Those who can't kill you will eventually make you stronger.
----------------Youdao, spent 6.35 seconds---------------
-What doesn't kill you makes you stronger
----------------Ali, spent 6.65 seconds---------------
-What doesn't kill you will make you stronger., 
----------------Baidu, spent 6.71 seconds---------------
-Those who cannot kill you will eventually make you stronger
+  ╰─ $ bin/translater 'hello world'
+Using Baidu
+---------- Baidu, spent 7.67 seconds use Firefox ----------
+你好世界
+```
+
+仅支持火狐浏览器以及 geckodriver（selenium driver for Firefox) 
+因为使用了浏览器 cache, 某一翻译引擎运行一次之后，如果再次选择该引擎，速度将得到极大提升。
+
+```sh
+╰─ $ bin/translater 'hello world'
+Using Baidu
+---------- Baidu, spent 3.29 seconds use Firefox cache ----------
+你好世界
+
+ ╰─ $ bin/translater 'hello world'
+Using Youdao
+---------- Youdao, spent 6.35 seconds use Firefox ----------
+你好世界。
+
+ ╰─ $ bin/translater 'hello world'
+Using Youdao
+Using exists session for Youdao
+---------- Youdao, spent 1.58 seconds use Firefox cache ----------
+你好世界。
 
 ```
 
+`translater --help` 获取有关参数的更多帮助。
+
+## Dependencies
+
+### Firefox 浏览器及 geckodriver
+translater 会启动一个 headless 模式的火狐(Firefox)浏览器内核访问一个随机翻译网站获取翻译.
+
+从 v0.4.8 版本开始，translater 不再为用户自动安装 geckodriver，你必须正确安装 Firefox 浏览器
+以及匹配的 geckodriver 版本，以 Arch Linux 为例：
+
 ```sh
- ╰─ $ ./bin/translater -A "What Doesn't Kill You Makes You Stronger"
-Using Youdao Tencent Ali Baidu 
----------------Baidu, spent 6.15 seconds---------------
-凡是没能击垮你的，都使你变得更强
----------------Youdao, spent 6.22 seconds---------------
-那些杀不死你的，会让你更强大
----------------Tencent, spent 8.91 seconds---------------
-摧毁不了你的东西会让你更强
----------------Ali, spent 9.69 seconds---------------
-杀不死你的东西会让你更强大, 
+$: pacman -S firefox geckodriver
 ```
+
+或安装 Firefox 之后，自己下载 geckodriver，并拷贝至 /usr/local/bin
+
+### Sqlite3
+
+translater 使用 Sqlite3 保存缓存的 session，来加速翻译流程。
+
+translster 同时还维护一个最快引擎的数据库，会自动记录每次不同引擎翻译的耗时，
+可以使用 --profile 初始化数据库以及分析那个翻译引擎速度快一些。，见：--auto 以及 --profile 选项。
 
 ## Installation
 
@@ -49,51 +70,27 @@ $: make release
 $: sudo make install
 ```
 
-translater 会启动一个 headless 模式的浏览器内核（Firefox/Chrome) 随机访问一个翻译网站获取翻译, 
-默认使用 Chrome 内核, 因此要求系统必须已安装 Chrome.
-
-从 v0.4.8 版本开始，translater 不再为用户自动安装 chromedriver (Chrome Selenium driver).
-作为用户，你必须确保安装正确匹配版本的 chrome/chromium 与 chromedriver.
-你可以使用系统包管理安装 chromedriver, 或自己下载可执行文件，并拷贝至 /usr/local/bin.
-
 ## Usage
 
-```sh
- ╰─ $ translater "Hello China!"
----------------Youdao--------------- 
-你好中国！
-
-╰─ $ translater "你好，中国！"
----------------Alibaba--------------- 
-Hello, China!
-```
-
-只支持中英互译，根据源语言自动判断。
-
-v0.3.0 版本引入了一个小数据库，会自动记录每次不同引擎翻译的耗时，可以使用 --profile 分析那个翻译引擎速度快一些。
+避免过于频繁的使用某一翻译而导致 IP 被封，建议直接运行即可，将使用随机引擎用于翻译：
 
 ```sh
- ╰─ $ translater --profile
-youdao average elapsed_seconds: 453.4 msecs for 5 samples
-baidu average elapsed_seconds: 513.0 msecs for 10 samples
-ali average elapsed_seconds: 514.2 msecs for 5 samples
-tencent average elapsed_seconds: 3320.285714285714 msecs for 7 samples
+ ╰─ $ bin/translater '你好，世界'
+Using Baidu
+---------- Baidu, spent 2.65 seconds use Firefox cache ----------
+Hello, World
 ```
-
-看起来 `有道` 在我这里速度快一些，用户可以根据返回的结果，自己指定翻译引擎，例如，下面的代码指定使用百度翻译。
 
 ```sh
-$: translater -e 'baidu' 'hello world!'
----------------Baidu---------------
-你好世界
+╰─ $ bin/translater 'hello world'
+Using Youdao
+---------- Youdao, spent 6.35 seconds use Firefox ----------
+你好世界。
 ```
-
-`translater --help` 获取更多参数的帮助。
 
 ## TODO
 
-1. 支持 Edge
-2. 当使用 selenium 启动一个浏览器进程并访问火山翻译主页时, 甚至手动输入翻译内容也不工作.
+2. 支持字节的火山翻译引擎, 当前，甚至非 headless 启动，手动输入翻译内容也不工作。
 
 ## Contributing
 

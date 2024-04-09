@@ -1,37 +1,52 @@
 class Translater
   class Bing
-    def initialize(browser, content, debug_mode, chan, start_time)
-      session, _driver = Translater.create_driver(browser, debug_mode).not_nil!
+    def initialize(browser, content, debug_mode, chan, start_time, target_language)
+      t = Translater.new(:bing, debug_mode, target_language)
+      session, is_new_session = t.find_or_create_firefox_session
+
       session.navigate_to("https://www.bing.com/translator")
 
       document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
 
-      source_content_ele = session.find_by_selector_timeout("textarea#tta_input_ta", timeout: 1)
+      input_selector = "textarea#tta_input_ta"
+      output_selector = "textarea#tta_output_ta"
+      language_selector = "select#tta_tgtsl"
 
-      session.find_by_selector_timeout("select#tta_tgtsl")
+      input_ele = session.find_by_selector_wait! input_selector
 
-      if !content.matches? /\p{Han}/
-        # 如果输入内容是英文, 修改目标语言为中文
-        document_manager.execute_script(%{select = document.querySelector("select#tta_tgtsl"); select.value = "zh-Hans"})
+      if !input_ele.text.blank?
+        puts "1"*100
       end
 
-      source_content_ele.click
+      session.find_by_selector_wait! language_selector
 
-      Translater.input(source_content_ele, content, wait_seconds: 0.1)
+      if target_language.chinese?
+        # 如果输入内容是英文, 修改目标语言为中文
+        document_manager.execute_script(%{select = document.querySelector("#{language_selector}"); select.value = "zh-Hans"})
+      end
+
+      input_ele.click
+
+      t.input(input_ele, content, wait_seconds: 0.1)
 
       if debug_mode
         STDERR.puts "Press ENTER key to continue ..."
         gets
       end
 
-      while result = document_manager.execute_script(%{return document.querySelector("textarea#tta_output_ta").value})
+      while result = document_manager.execute_script(%{return document.querySelector("#{output_selector}").value})
         break unless result.strip == "..."
 
         sleep 0.1
       end
 
-      chan.send({result, self.class.name.split(":")[-1], Time.monotonic - start_time, browser})
-    rescue Socket::ConnectError
+      chan.send({result, self.class.name.split(":")[-1], Time.monotonic - start_time, browser, is_new_session})
+    rescue e : Socket::ConnectError
+      STDERR.puts e.message
+      exit 1
+    rescue e : Selenium::Error
+      STDERR.puts e.message
+      abort "Network connection error?"
     ensure
       session.delete if session
       # driver.stop if driver
