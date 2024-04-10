@@ -14,10 +14,6 @@ class Translater
 
       input_ele = session.find_by_selector_wait! input_selector
 
-      if !input_ele.text.blank?
-        puts "1"*100
-      end
-
       session.find_by_selector_wait! language_selector
 
       if target_language.chinese?
