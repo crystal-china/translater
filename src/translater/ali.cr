@@ -28,6 +28,8 @@ class Translater
         chunked_content.each do |c|
           t.input(ele, c)
 
+          session.screenshot("aaa.png")
+
           result = session.find_by_selector_wait!(output_selector) { |e| !e.text.blank? }
 
           io << result.text
@@ -47,12 +49,12 @@ class Translater
 
       session.navigate_to("https://translate.alibaba.com/")
 
-      source_content_ele = session.find_by_selector_wait! "textarea#source"
-      source_content_ele.click
+      input_ele = session.find_by_selector_wait! "textarea#source"
+      input_ele.click
 
       document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
 
-      text = input(t, source_content_ele, content, document_manager, session)
+      text = input(t, input_ele, content, document_manager, session)
 
       if debug_mode
         STDERR.puts "Press ENTER key to continue ..."

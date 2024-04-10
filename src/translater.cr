@@ -133,7 +133,7 @@ class Translater
       serialized_session = record_exists?(table_name, column_name, port)
 
       if serialized_session
-        puts "Using exists session for #{engine}"
+        STDERR.puts "Using #{engine} cache"
 
         session = Selenium::Session.from_json(serialized_session.as(String))
         is_new_session = false
@@ -168,11 +168,11 @@ if still not work, kill the geckodriver process manually before try again."
       content1 = content[0..-10]
       content2 = content[-9..-1]
 
-      puts content1, content2
-
       element.send_keys(key: content1)
 
-      sleep 0.3
+      # 先粘贴，后手动输入，间隔时间不能太长。
+      # 否则可能会造成 ali 的引擎，将后面手动输入的部分忽略
+      sleep 0.1
 
       content2.each_char do |e|
         element.send_keys(key: e.to_s)
