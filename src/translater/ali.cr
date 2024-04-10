@@ -28,8 +28,6 @@ class Translater
         chunked_content.each do |c|
           t.input(ele, c)
 
-          session.screenshot("aaa.png")
-
           result = session.find_by_selector_wait!(output_selector) { |e| !e.text.blank? }
 
           io << result.text

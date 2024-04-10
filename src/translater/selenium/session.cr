@@ -28,8 +28,8 @@ class Selenium::Session
 
     element.not_nil!
   rescue e : Timeout::Error
-    e.inspect_with_backtrace(STDERR)
-    STDERR.puts "CSS selector #{selector} was timeout for #{seconds} seconds!"
+    # e.inspect_with_backtrace(STDERR)
+    STDERR.puts "CSS selector #{selector} timeout for #{seconds} seconds!"
   end
 
   def find_by_selector_wait!(selector : String, *, was_hidden : Bool = false, &) : Selenium::Element

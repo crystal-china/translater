@@ -6,28 +6,13 @@ class Translater
 
       session.navigate_to("https://fanyi.baidu.com/")
 
-      # # old baidu translate
-      # session.find_by_selector_timeout("a.desktop-guide-close").click
-      # session.find_by_selector_timeout("span.app-guide-close").click
-      # input_ele = session.find_by_selector_timeout("textarea#baidu_translate_input", timeout: 1)
-
-      # 这个弹窗有时候有, 有时候没有, 所以, 还得保留
-      if (ele1 = session.find_by_selector_timeout "div[style*='display: block;'][style^='background-color']>div>div>span")
-        ele1.click
-      end
-
-      # 不知道是什么，有时候会出现，遮挡输入框
-      session.find_by_selector_wait_disappear!("div.ant-row.ant-row-center.ant-row-middle")
-
       # 百度的行为：
-      # 1. input_selector 总是存在
+      # 1. input_selector 总是存在, 而且必须是 div
       # 2. 如果上次用户输入有残留，inputed_selector 存在
       # 3. 当删除用户上次输入时，output_selector 会消失，重新输入，会存在。
       input_selector = "div[role='textbox'][contenteditable='true']"
       inputed_selector = "span[data-slate-string='true']"
       output_selector = "span[disabled][spellcheck='false']"
-
-      input_ele = session.find_by_selector_wait! input_selector
 
       # 如果有这个元素存在，则一定有上次输入的文本
       if session.find_by_selector_timeout inputed_selector
@@ -35,10 +20,17 @@ class Translater
         document_manager.execute_script(%{select = document.querySelector("#{inputed_selector}"); select.textContent = "" ;})
 
         session.find_by_selector_wait_disappear! output_selector
+      else
+        # 这个弹窗有时候有, 有时候没有, 所以, 还得保留
+        if (ele1 = session.find_by_selector_timeout "div[style*='display: block;'][style^='background-color']>div>div>span")
+          ele1.click
+        end
 
-        input_ele = session.find_by_selector_wait! input_selector
+        # 不知道是什么，有时候会出现，遮挡输入框
+        session.find_by_selector_wait_disappear!("div.ant-row.ant-row-center.ant-row-middle")
       end
 
+      input_ele = session.find_by_selector_wait! input_selector
       input_ele.click
 
       # 百度有检测，不可以粘贴，必须全部手动输入
@@ -56,12 +48,12 @@ class Translater
 
       chan.send({result.text, self.class.name.split(":")[-1], Time.monotonic - start_time, browser, is_new_session})
     rescue e : Socket::ConnectError
-      e.inspect_with_backtrace(STDERR)
-      # STDERR.puts e.message
+      # e.inspect_with_backtrace(STDERR)
+      STDERR.puts e.message
       exit 1
     rescue e : Selenium::Error
-      # STDERR.puts e.message
-      e.inspect_with_backtrace(STDERR)
+      # e.inspect_with_backtrace(STDERR)
+      STDERR.puts e.message
       abort "Network connection error?"
     ensure
       session.delete if session

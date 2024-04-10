@@ -100,7 +100,7 @@ class Translater
     status = self.firefox_status
 
     if status.first_run? || status.ready?
-      # 两种情况都没有启动 session, 因此, 清除老的 session
+      # 两种情况都没有启动 Firefox, 因此, 清除老的 session
       if record_exists?(table_name, column_name, port)
         DB.connect(SESSION_DB_FILE) { |db| db.exec "delete from #{table_name} where id = #{port};" }
       end
@@ -133,7 +133,7 @@ class Translater
       serialized_session = record_exists?(table_name, column_name, port)
 
       if serialized_session
-        STDERR.puts "Using #{engine} cache"
+        # STDERR.puts "Using #{engine} cache"
 
         session = Selenium::Session.from_json(serialized_session.as(String))
         is_new_session = false
@@ -193,8 +193,6 @@ if still not work, kill the geckodriver process manually before try again."
       chan = Channel(Tuple(String, String, Time::Span, Browser, Bool)).new
 
       start_time = Time.monotonic
-
-      print "Using "
 
       if engine_list.includes? "Ali"
         print "Ali "

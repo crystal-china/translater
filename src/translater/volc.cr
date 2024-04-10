@@ -100,16 +100,7 @@ class Translater
         gets
       end
 
-      result = session.find_by_selector_wait! output_selector
-
-      puts result.text
-
-      session.screenshot("11.png")
       result = session.find_by_selector_wait!(output_selector) { |e| e.text.strip != "..." }
-
-      puts result.text
-
-      session.screenshot("22.png")
 
       chan.send({result.text, self.class.name.split(":")[-1], Time.monotonic - start_time, browser, is_new_session})
     rescue e : Socket::ConnectError
