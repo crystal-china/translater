@@ -1,0 +1,16 @@
+1. 没有启动 geckodriver 或 Firefox 进程, 运行 Selenium::Driver.for(:firefox, base_url: "http://localhost:4444")
+此时调用 driver.status, raise Socket::ConnectError
+
+2. 没有启动 gecok 或 firefox 进程,
+   service = Selenium::Service.firefox(driver_path: "/usr/bin/geckodriver")
+   driver = Selenium::Driver.for(:firefox, service: service)
+
+   #<Selenium::Status:0x791048218fa0 @ready=true, @message="">
+   此时,gecoko 启动了, 但是没有  firefox 进程.
+
+3.  当启动 driver.create_session(capabilities) 的时候, firefox 进程已经启动
+    此时状态: #<Selenium::Status:0x791048a60ac0 @ready=false, @message="Session already started">
+
+4. 保持进程不退出.
+   driver = Selenium::Driver.for(:firefox, base_url: "http://localhost:4444")
+   此时,状态: #<Selenium::Status:0x78f66c4caac0 @ready=false, @message="Session already started">
