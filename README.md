@@ -18,6 +18,8 @@
 
 默认会随机选择一个支持的引擎来翻译，这可以避免过于频繁的使用某一翻译引擎而导致 IP 被封。
 
+搭配 [goldendict](https://github.com/goldendict/goldendict) 作为词典之一，一起食用效果更佳！
+
 ```sh
  ╰─ $ bin/translater  'hello world!'
 Using Ali

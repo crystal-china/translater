@@ -31,8 +31,9 @@ PROFILE_DB_FILE = "sqlite3:#{find_db_path("profile.db")}"
 SESSION_DB_FILE = "sqlite3:#{find_db_path("session.db")}"
 
 def profile_db_exists?
-  # TODO: 还要检测文件大小
-  File.exists?(PROFILE_DB_FILE.split(':')[1])
+  db_file = PROFILE_DB_FILE.split(':')[1]
+
+  File.exists?(db_file) && File.info(db_file).size > 0
 end
 
 enum TargetLanguage
@@ -104,8 +105,8 @@ USAGE
       inputs = e.split(",")
       engine_list = [] of String
 
-      inputs.each do |input|
-        if (engine = Engine.parse?(input))
+      inputs.each do |i|
+        if (engine = Engine.parse?(i))
           engine_list << engine.to_s
         else
           abort "Supported options: #{Engine.names.map(&.downcase).join ", "}"
@@ -122,7 +123,7 @@ USAGE
           db.query "select name from fastest_engine limit 1;" do |rs|
             rs.each do
               # If fastest_engine is empty, this block will be ignored.
-              if engine = Engine.parse(rs.read(String))
+              if (engine = Engine.parse(rs.read(String)))
                 engine_list = [engine.to_s]
               end
             end

@@ -21,7 +21,7 @@ class Selenium::Session
     element : Selenium::Element? = nil
 
     timeout(seconds) do
-      until element = find_by_selector(selector, was_hidden: was_hidden)
+      until (element = find_by_selector selector, was_hidden: was_hidden)
         sleep 0.1
       end
     end
@@ -36,7 +36,7 @@ class Selenium::Session
     element = nil
 
     loop do
-      until element = find_by_selector(selector, was_hidden: was_hidden)
+      until (element = find_by_selector selector, was_hidden: was_hidden)
         sleep 0.1
       end
 
@@ -52,7 +52,7 @@ class Selenium::Session
   end
 
   def find_by_selector_wait!(selector : String, *, was_hidden : Bool = false) : Selenium::Element
-    until element = find_by_selector(selector, was_hidden: was_hidden)
+    until (element = find_by_selector selector, was_hidden: was_hidden)
       sleep 0.1
     end
 

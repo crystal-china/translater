@@ -30,7 +30,7 @@ class Translater
         gets
       end
 
-      while result = document_manager.execute_script(%{return document.querySelector("#{output_selector}").value})
+      while (result = document_manager.execute_script %{return document.querySelector("#{output_selector}").value})
         break unless result.strip == "..."
 
         sleep 0.1

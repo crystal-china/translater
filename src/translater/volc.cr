@@ -1,4 +1,4 @@
-# FIXME: still not work!
+# FIXME: volc still not work!
 
 class Translater
   class Volc
@@ -80,7 +80,7 @@ class Translater
       output_editor_selector = "div.slate-editor[contenteditable='false']"
 
       # 这两个有内容时才存在
-      input_selector = "#{input_editor_selector} span[data-slate-string='true']"
+      _input_selector = "#{input_editor_selector} span[data-slate-string='true']"
       output_selector = "#{output_editor_selector} span[data-slate-string='true']"
 
       input_ele = session.find_by_selector_wait! input_editor_selector
