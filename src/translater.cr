@@ -194,6 +194,8 @@ if still not work, kill the geckodriver process manually before try again."
 
       start_time = Time.monotonic
 
+      print "Using "
+
       if engine_list.includes? "Ali"
         print "Ali "
         spawn Ali.new(browser, content, debug_mode, chan, start_time, target_language)
