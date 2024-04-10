@@ -13,12 +13,13 @@ dependencies:
     github: zw963/selenium.cr
   sqlite3:
     github: crystal-lang/crystal-sqlite3
+  timeout:
+    github: wyhaines/timeout.cr
 
 development_dependencies:
   ameba:
     github: crystal-ameba/ameba
-  timeout:
-    github: wyhaines/timeout.cr
+
 
 crystal: 1.8.0
 
