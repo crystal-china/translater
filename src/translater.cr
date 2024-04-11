@@ -257,10 +257,11 @@ if still not work, kill the geckodriver process manually before try again."
           when timeout timeout_seconds.seconds
             STDERR.puts "Timeout for #{timeout_seconds} seconds!"
           end
-        rescue SQLite3::Exception
+        rescue e : SQLite3::Exception
+          e.inspect_with_backtrace(STDERR)
           STDERR.puts "Visit table #{table_name} in db file #{PROFILE_DB_FILE} failed, try delete db file and retry."
-        ensure
-          db.close if db
+          # ensure
+          #   db.close if db
         end
       end
     rescue e
