@@ -14,9 +14,9 @@ class Translater
 
       input_ele = session.find_by_selector_wait! input_selector
 
-      session.find_by_selector_wait! language_selector
+      language_selector_ele = session.find_by_selector_wait! "#{language_selector} option"
 
-      if target_language.chinese?
+      if target_language.chinese? && language_selector_ele.text != "Chinese Simplified"
         # 如果输入内容是英文, 修改目标语言为中文
         document_manager.execute_script(%{select = document.querySelector("#{language_selector}"); select.value = "zh-Hans"})
       end
