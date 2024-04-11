@@ -120,15 +120,11 @@ class Translater
         end
 
         if driver_path.nil?
-          driver_parent_path = ENV["PATH"].split(':').find do |p|
-            File.executable?(File.join(p, "geckodriver"))
-          end
+          driver_path = Process.find_executable(driver_binary)
 
-          if driver_parent_path.nil?
+          if driver_path.nil?
             abort "Selenium driver couldn't found on the path!
 try install it into #{driver_paths.join(" or ")} before continue, exit ..."
-          else
-            driver_path = File.join(driver_parent_path, "geckodriver")
           end
         end
 
