@@ -99,7 +99,7 @@ USAGE
     parser.on(
       "-e ENGINE",
       "--engine=ENGINE",
-      "Specify engine used for translate, support #{Engine.names.map(&.downcase).join(", ")}.
+      "Specify engines used for translate, support #{Engine.names.map(&.downcase).join(", ")}.
     multi-engine is possible, joined with comma, e.g. -e youdao,tencent
     ") do |e|
       inputs = e.split(",")
@@ -112,6 +112,26 @@ USAGE
           abort "Supported options: #{Engine.names.map(&.downcase).join ", "}"
         end
       end
+    end
+
+    parser.on(
+      "-s ENGINE",
+      "--skip=ENGINE",
+      "Specify engines which always skip for translate, support #{Engine.names.map(&.downcase).join(", ")}.
+    multi-engine is possible, joined with comma, e.g. -s baidu,youdao
+    ") do |e|
+      inputs = e.split(",")
+      allowed_engine_list = Engine.names
+
+      inputs.each do |i|
+        if (engine = Engine.parse?(i))
+          allowed_engine_list.delete(engine.to_s)
+        else
+          abort "Supported options: #{Engine.names.map(&.downcase).join ", "}"
+        end
+      end
+
+      engine_list = allowed_engine_list.shuffle![0..0]
     end
 
     parser.on(
@@ -134,11 +154,11 @@ USAGE
       end
     end
 
-    # parser.on(
-    #   "-A",
-    #   "Use all known engine for translate, can be used for profile purpose.") do
-    #   engine_list = Engine.names
-    # end
+    parser.on(
+      "-A",
+      "Use all known engine for translate, can be used for profile purpose.") do
+      engine_list = Engine.names
+    end
 
     parser.on(
       "--timeout=SECONDS",
