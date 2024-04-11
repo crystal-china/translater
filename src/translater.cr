@@ -109,17 +109,30 @@ class Translater
         # 此时 geckodriver 没有启动, 因此从 service 建立新的 driver
         driver_binary = "geckodriver"
 
-        driver_paths = ["/usr/local/bin/#{driver_binary}", "/usr/bin/#{driver_binary}"]
+        driver_paths = [
+          "/usr/local/bin/#{driver_binary}",
+          "/usr/bin/#{driver_binary}",
+          Path["~/.webdrivers/#{driver_binary}"].expand(home: true),
+        ]
 
         driver_path = driver_paths.each do |path|
-          break path if File.executable? path
+          break path.to_s if File.executable? path
         end
 
         if driver_path.nil?
-          abort "#{driver_paths.join(" or ")} not exists! Please install correct version Selenium driver before continue, exit ..."
+          driver_parent_path = ENV["PATH"].split(':').find do |p|
+            File.executable?(File.join(p, "geckodriver"))
+          end
+
+          if driver_parent_path.nil?
+            abort "Selenium driver couldn't found on the path!
+try install it into #{driver_paths.join(" or ")} before continue, exit ..."
+          else
+            driver_path = File.join(driver_parent_path, "geckodriver")
+          end
         end
 
-        service = Selenium::Service.firefox(driver_path: "/usr/bin/geckodriver", port: port)
+        service = Selenium::Service.firefox(driver_path: driver_path, port: port)
         self.driver = Selenium::Driver.for(:firefox, service: service)
       end
 
