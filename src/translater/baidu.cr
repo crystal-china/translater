@@ -55,8 +55,8 @@ class Translater
       # e.inspect_with_backtrace(STDERR)
       STDERR.puts e.message
       abort "Network connection error?"
-    ensure
-      session.delete if session
+      # ensure
+      #   session.delete if session
       # driver.stop if driver
     end
   end

@@ -54,8 +54,8 @@ class Translater
     rescue e : Selenium::Error
       STDERR.puts e.message
       abort "Network connection error?"
-    ensure
-      session.delete if session
+      # ensure
+      #   session.delete if session
       # driver.stop if driver
     end
   end
