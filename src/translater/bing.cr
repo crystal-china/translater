@@ -19,6 +19,8 @@ class Translater
       if target_language.chinese? && language_selector_ele.text != "Chinese Simplified"
         # 如果输入内容是英文, 修改目标语言为中文
         document_manager.execute_script(%{select = document.querySelector("#{language_selector}"); select.value = "zh-Hans"})
+      elsif target_language.english? && language_selector_ele.text != "English"
+        document_manager.execute_script(%{select = document.querySelector("#{language_selector}"); select.value = "en"})
       end
 
       input_ele.click
