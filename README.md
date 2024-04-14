@@ -50,6 +50,14 @@ Hello, world!
 
 `translater --help` 获取有关参数的更多帮助。
 
+## Arch Linux 安装
+
+可以通过 Arch Linux 的 AUR 仓库安装 [translater-git](https://aur.archlinux.org/packages/translater-git) 或[自建源](https://github.com/taotieren/aur-repo)
+
+```bash
+yay -Syu translater
+```
+
 ## Dependencies
 
 ### 火狐(Firefox)浏览器及 geckodriver (selenium driver for Firefox).
