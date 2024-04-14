@@ -2,4 +2,4 @@
 
 - Fix -v print correct version.
 - Try not clean session between translater, not sure if it will cause issue.
-
+- Fix `make release` not install development dependencies.
