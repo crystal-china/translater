@@ -10,8 +10,8 @@ ENTRY_PATH := $(shell pwd)/$(shell cat shard.yml |grep main: |cut -d: -f2|cut -d
 CACHE_DIR != ${COMPILER} env CRYSTAL_CACHE_DIR
 CACHE_DIR := $(CACHE_DIR)/$(subst /,-,${shell echo ${ENTRY_PATH} |cut -c2-})
 
-FLAGS ?= --progress -Dstrict_multi_assign -Dno_number_autocast
-RELEASE_FLAGS ?= --progress --release -Dstrict_multi_assign -Dno_number_autocast
+FLAGS ?= --progress -Dstrict_multi_assign -Dno_number_autocast -Duse_pcre2 -Dpreview_overload_order
+RELEASE_FLAGS ?= --release -Dpreview_mt --progress -Dstrict_multi_assign -Dno_number_autocast -Duse_pcre2 -Dpreview_overload_order
 
 # INSTALL:
 DESTDIR ?= /usr/local
@@ -35,7 +35,7 @@ $(O): $(SRC_SOURCES) $(LIB_SOURCES) lib
 .PHONY: release
 release: ## Build release binary.
 release: lib
-	$(COMPILER) build $(RELEASE_FLAGS) -Dpreview_mt $(ENTRY) -o $(O)
+	$(COMPILER) build $(RELEASE_FLAGS) $(ENTRY) -o $(O)
 
 .PHONY: spec
 spec: ## Run spec suite.
@@ -66,8 +66,8 @@ check:
 	$(SHARDS) prune
 
 
-lib: shard.lock
-	$(SHARDS) install
+lib:
+	$(SHARDS) install --without-development
 
 shard.lock: shard.yml
 	$(SHARDS) update
