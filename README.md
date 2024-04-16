@@ -20,6 +20,8 @@
 
 搭配 [goldendict](https://github.com/goldendict/goldendict) 作为词典之一，一起食用效果更佳！
 
+![goldendict](images/goldendict.png)
+
 ```sh
  ╰─ $ bin/translater  'hello world!'
 Using Ali
@@ -83,7 +85,7 @@ translster 同时还维护一个最快引擎的数据库，会自动记录每次
 扔到 $PATH 的文件夹里，目前支持 Linux 和 OSX.
 
 或者从源码编译安装：
-《
+
 ```sh
 $: make release
 $: sudo make install
