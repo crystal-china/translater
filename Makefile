@@ -11,7 +11,7 @@ CACHE_DIR != ${COMPILER} env CRYSTAL_CACHE_DIR
 CACHE_DIR := $(CACHE_DIR)/$(subst /,-,${shell echo ${ENTRY_PATH} |cut -c2-})
 
 FLAGS ?= --progress -Dstrict_multi_assign -Dno_number_autocast -Duse_pcre2 -Dpreview_overload_order
-RELEASE_FLAGS ?= --release -Dpreview_mt --progress -Dstrict_multi_assign -Dno_number_autocast -Duse_pcre2 -Dpreview_overload_order
+RELEASE_FLAGS ?= --release --progress -Dstrict_multi_assign -Dno_number_autocast -Duse_pcre2 -Dpreview_overload_order
 
 # INSTALL:
 DESTDIR ?= /usr/local
