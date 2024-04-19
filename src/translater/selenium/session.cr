@@ -1,12 +1,12 @@
 require "timeout"
 
 class Selenium::Session
-  # def find_by_selector_timeout!(selector : String, *, was_hidden : Bool = false, timeout seconds : Number = 0.5)
+  # def find_by_selector_timeout!(selector : String, *, was_hidden : Bool = false, timeout seconds : Number = 0.2)
   #   element : Selenium::Element? = nil
 
   #   timeout(seconds) do
   #     until element = find_by_selector(selector, was_hidden: was_hidden)
-  #       sleep 0.1
+  #       sleep 0.05
   #     end
   #   end
 
@@ -17,12 +17,12 @@ class Selenium::Session
   #   exit(1)
   # end
 
-  def find_by_selector_timeout(selector : String, *, was_hidden : Bool = false, timeout seconds : Number = 0.5)
+  def find_by_selector_timeout(selector : String, *, was_hidden : Bool = false, timeout seconds : Number = 0.2)
     element : Selenium::Element? = nil
 
     timeout(seconds) do
       until (element = find_by_selector selector, was_hidden: was_hidden)
-        sleep 0.1
+        sleep 0.05
       end
     end
 
@@ -30,6 +30,8 @@ class Selenium::Session
   rescue e : Timeout::Error
     # e.inspect_with_backtrace(STDERR)
     STDERR.puts "CSS selector #{selector} timeout for #{seconds} seconds!"
+
+    nil
   end
 
   def find_by_selector_wait!(selector : String, *, was_hidden : Bool = false, &) : Selenium::Element
@@ -37,7 +39,7 @@ class Selenium::Session
 
     loop do
       until (element = find_by_selector selector, was_hidden: was_hidden)
-        sleep 0.1
+        sleep 0.05
       end
 
       result = yield element
@@ -53,7 +55,7 @@ class Selenium::Session
 
   def find_by_selector_wait!(selector : String, *, was_hidden : Bool = false) : Selenium::Element
     until (element = find_by_selector selector, was_hidden: was_hidden)
-      sleep 0.1
+      sleep 0.05
     end
 
     element
@@ -64,7 +66,7 @@ class Selenium::Session
 
   def find_by_selector_wait_disappear!(selector : String, *, was_hidden : Bool = false)
     while find_by_selector(selector, was_hidden: was_hidden)
-      sleep 0.1
+      sleep 0.05
     end
   rescue
     STDERR.puts "CSS selector #{selector} is never disppear."

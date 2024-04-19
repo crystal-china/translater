@@ -6,7 +6,7 @@ class Translater
 
       session.navigate_to("https://fanyi.youdao.com/index.html#")
 
-      if (ele1 = session.find_by_selector_timeout ".pop-up-comp.mask img.close", timeout: 0.5)
+      if (ele1 = session.find_by_selector_timeout ".pop-up-comp.mask img.close")
         ele1.click
       end
 

@@ -36,7 +36,7 @@ class Translater
       # 百度有检测，不可以粘贴，必须全部手动输入
       content.each_char do |e|
         input_ele.send_keys(key: e.to_s)
-        sleep 0.05
+        sleep 0.01
       end
 
       if debug_mode
