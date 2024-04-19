@@ -61,14 +61,13 @@ browser = Browser::Firefox
 engine_list = Engine.names.shuffle![0..0]
 timeout_seconds : Int32 = 10
 
-stdin = [] of String
-
 # FIXME: Don't know why, run spec on github action, cause #pipe? return true.
 if STDIN.info.type.pipe?
-  while (input = STDIN.gets)
-    stdin << input
+  content = String.build do |io|
+    while (input = STDIN.gets)
+      io << input
+    end
   end
-  content = stdin.join("\n").strip
 
   ARGV << "--help" if content.empty? # hack for github action.
 else
