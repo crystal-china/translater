@@ -65,19 +65,20 @@ check:
 	$(SHARDS) check || $(SHARDS) install
 	$(SHARDS) prune
 
-
-lib:
+.PHONY: lib
+lib: ## Install dependencies
 	$(SHARDS) install --without-development
 
-shard.lock: shard.yml
+.PHONY: shard.lock
+shard.lock: shard.yml # Update dependencies
 	$(SHARDS) update
 
 .PHONY: clean
-clean:
+clean: ## Clean binary
 	@rm -f $(O)
 
 .PHONY: cleanall
-cleanall: clean
+cleanall: clean ## Clean cache too.
 	@rm -rf ${CACHE_DIR}
 
 .PHONY: help
