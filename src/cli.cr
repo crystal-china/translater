@@ -270,8 +270,6 @@ end
 
 real_timeout = engine_list.includes?("Baidu") ? 20 : timeout_seconds
 
-pp! real_timeout
-
 Translater.run(
   content: content,
   target_language: target_language,
