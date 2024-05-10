@@ -268,11 +268,15 @@ else
   target_language = TargetLanguage::Chinese
 end
 
+real_timeout = engine_list.includes?("Baidu") ? 20 : timeout_seconds
+
+pp! real_timeout
+
 Translater.run(
   content: content,
   target_language: target_language,
   debug_mode: debug_mode,
   browser: browser,
   engine_list: engine_list,
-  timeout_seconds: timeout_seconds
+  timeout_seconds: real_timeout
 )
