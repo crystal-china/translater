@@ -238,7 +238,7 @@ if still not work, kill the geckodriver process manually before try again."
       puts
 
       begin
-        db = DB.connect(PROFILE_DB_FILE) if profile_db_exists?
+        db = DB.open(PROFILE_DB_FILE) if profile_db_exists?
 
         engine_list.size.times do
           select
