@@ -243,7 +243,7 @@ if still not work, kill the geckodriver process manually before try again."
         db = DB.open(PROFILE_DB_FILE) if profile_db_exists?
 
         # 代表已经运行过 engine_init
-        file = File.open("#{Dir.tempdir}/translater_engine_init", mode: "w") if engine_init
+        file = File.open(ENGINE_INIT_FILE, mode: "w") if engine_init
 
         engine_list.size.times do
           select

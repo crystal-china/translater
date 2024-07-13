@@ -27,13 +27,22 @@ def find_db_path(name)
   default_path
 end
 
-PROFILE_DB_FILE = "sqlite3:#{find_db_path("profile.db")}"
-SESSION_DB_FILE = "sqlite3:#{find_db_path("session.db")}"
+PROFILE_DB_FILE  = "sqlite3:#{find_db_path("profile.db")}"
+SESSION_DB_FILE  = "sqlite3:#{find_db_path("session.db")}"
+ENGINE_INIT_FILE = "#{Dir.tempdir}/translater_engine_init"
 
 def profile_db_exists?
   db_file = PROFILE_DB_FILE.split(':')[1]
 
   File.exists?(db_file) && File.info(db_file).size > 0
+end
+
+def available_engines
+  if File.exists? ENGINE_INIT_FILE
+    File.read(ENGINE_INIT_FILE).chomp.split("\n")
+  else
+    Engine.names
+  end
 end
 
 enum TargetLanguage
@@ -58,7 +67,7 @@ end
 debug_mode = false
 content = ""
 browser = Browser::Firefox
-engine_list = Engine.names.shuffle![0..0]
+engine_list = available_engines.shuffle![0..0]
 timeout_seconds : Int32 = 10
 engine_init = false
 
@@ -165,7 +174,7 @@ USAGE
     parser.on(
       "-A",
       "Use all known engine for translate, can be used for profile purpose.") do
-      engine_list = Engine.names
+      engine_list = available_engines
     end
 
     parser.on(
