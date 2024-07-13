@@ -195,7 +195,7 @@ if still not work, kill the geckodriver process manually before try again."
     end
   end
 
-  def self.run(content, target_language, debug_mode, browser, engine_list, timeout_seconds)
+  def self.run(content, target_language, debug_mode, browser, engine_list, timeout_seconds, engine_init)
     return if content == "--help"
 
     begin
@@ -238,7 +238,12 @@ if still not work, kill the geckodriver process manually before try again."
       puts
 
       begin
+        # 这里从 connect 改为 open, 允许创建一个连接池, 进而允许多个连接同时执行.
+        # 否则, 添加多引擎时, 会报错.
         db = DB.open(PROFILE_DB_FILE) if profile_db_exists?
+
+        # 代表已经运行过 engine_init
+        file = File.open("#{Dir.tempdir}/translater_engine_init", mode: "w") if engine_init
 
         engine_list.size.times do
           select
@@ -248,19 +253,22 @@ if still not work, kill the geckodriver process manually before try again."
             table_name = engine_name.underscore
 
             db.exec "insert into #{table_name} (elapsed_seconds) values (?)", elapsed_seconds.to_f if db
+            file.puts engine_name if file
 
             puts "---------- #{engine_name}, spent #{elapsed_seconds} seconds use #{browser}#{is_new_session ? "" : " cache"} ----------\n#{translated_text}"
           when timeout timeout_seconds.seconds
             STDERR.puts "Timeout for #{timeout_seconds} seconds!"
           end
+
           # 不加这个，当访问多个表的时候，可能会出现 Invalid memory access 错误。
           sleep 0.1
         rescue e : SQLite3::Exception
           e.inspect_with_backtrace(STDERR)
           STDERR.puts "Visit table #{table_name} in db file #{PROFILE_DB_FILE} failed, try delete db file and retry."
-        ensure
-          db.close if db
         end
+      ensure
+        db.close if db
+        file.close if file
       end
     rescue e
       e.inspect_with_backtrace(STDERR)

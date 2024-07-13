@@ -60,6 +60,7 @@ content = ""
 browser = Browser::Firefox
 engine_list = Engine.names.shuffle![0..0]
 timeout_seconds : Int32 = 10
+engine_init = false
 
 # FIXME: Don't know why, run spec on github action, cause #pipe? return true.
 if STDIN.info.type.pipe?
@@ -94,6 +95,14 @@ USAGE
     #         browser = value
     #       end
     #     end
+
+    parser.on(
+      "--init", "Check engines if work, and disable it if not available.") do |e|
+      run_profile
+      engine_list = Engine.names
+      content = "hello world!"
+      engine_init = true
+    end
 
     parser.on(
       "-e ENGINE",
@@ -166,6 +175,8 @@ USAGE
     end
 
     parser.unknown_args do |args|
+      next if engine_init
+
       if !STDIN.info.type.pipe?
         if args.empty?
           STDOUT.puts "Please specify translate content. e.g. translater 'hello, China!'"
@@ -186,55 +197,7 @@ USAGE
     end
 
     parser.on("--profile", "Create profile dbs for translate engines.") do
-      engine_names = Engine.names.map(&.downcase)
-      if profile_db_exists?
-        DB.connect PROFILE_DB_FILE do |db|
-          ary = [] of String
-
-          engine_names.each do |engine_name|
-            db.query "select avg(elapsed_seconds), count(elapsed_seconds) from #{engine_name};" do |rs|
-              rs.each do
-                avg = rs.read(Float64?)
-                count = rs.read(Int64)
-
-                elapsed_seconds = if avg
-                                    sprintf("%.2f", avg)
-                                  else
-                                    "NA"
-                                  end
-
-                ary.push "#{engine_name}: average spent #{elapsed_seconds} seconds for #{count} samples\n"
-              end
-            end
-          end
-
-          ary.sort_by! &.[/[\d\.]+/].to_f64
-
-          fastest_engine = ary[0][/(\w+):/, 1]
-
-          db.exec("INSERT INTO fastest_engine (id,name) VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET name = ?;", 1, fastest_engine, fastest_engine)
-
-          puts ary.join
-        end
-      else
-        DB.connect PROFILE_DB_FILE do |db|
-          engine_names.each do |engine_name|
-            db.exec "create table if not exists #{engine_name} (
-            id INTEGER PRIMARY KEY,
-            elapsed_seconds REAL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );"
-          end
-
-          db.exec "create table if not exists fastest_engine (
-            id INTEGER PRIMARY KEY,
-            name TEXT
-  );"
-
-          STDERR.puts "Initialize profile dbs done."
-        end
-      end
-
+      run_profile
       exit
     end
 
@@ -262,6 +225,58 @@ rescue SQLite3::Exception
   STDERR.puts "Visit profile db file #{PROFILE_DB_FILE} failed, try delete it and retry."
 end
 
+def run_profile
+  engine_names = Engine.names.map(&.downcase)
+
+  if profile_db_exists?
+    DB.connect PROFILE_DB_FILE do |db|
+      ary = [] of String
+
+      engine_names.each do |engine_name|
+        db.query "select avg(elapsed_seconds), count(elapsed_seconds) from #{engine_name};" do |rs|
+          rs.each do
+            avg = rs.read(Float64?)
+            count = rs.read(Int64)
+
+            elapsed_seconds = if avg
+                                sprintf("%.2f", avg)
+                              else
+                                "NA"
+                              end
+
+            ary.push "#{engine_name}: average spent #{elapsed_seconds} seconds for #{count} samples\n"
+          end
+        end
+      end
+
+      ary.sort_by! &.[/[\d\.]+/].to_f64
+
+      fastest_engine = ary[0][/(\w+):/, 1]
+
+      db.exec("INSERT INTO fastest_engine (id,name) VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET name = ?;", 1, fastest_engine, fastest_engine)
+
+      puts ary.join
+    end
+  else
+    DB.connect PROFILE_DB_FILE do |db|
+      engine_names.each do |engine_name|
+        db.exec "create table if not exists #{engine_name} (
+            id INTEGER PRIMARY KEY,
+            elapsed_seconds REAL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );"
+      end
+
+      db.exec "create table if not exists fastest_engine (
+            id INTEGER PRIMARY KEY,
+            name TEXT
+  );"
+
+      STDERR.puts "Initialize profile dbs done."
+    end
+  end
+end
+
 if content =~ /\p{Han}/
   target_language = TargetLanguage::English
 else
@@ -276,5 +291,6 @@ Translater.run(
   debug_mode: debug_mode,
   browser: browser,
   engine_list: engine_list,
-  timeout_seconds: real_timeout
+  timeout_seconds: real_timeout,
+  engine_init: engine_init
 )
