@@ -116,7 +116,7 @@ class Translater
         ]
 
         driver_path = driver_paths.each do |path|
-          break path.to_s if File.executable? path
+          break path.to_s if File::Info.executable? path
         end
 
         if driver_path.nil?
