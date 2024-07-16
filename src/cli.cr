@@ -41,6 +41,7 @@ def available_engines
   if File.exists? ENGINE_INIT_FILE
     File.read(ENGINE_INIT_FILE).chomp.split("\n")
   else
+    STDERR.puts "Try run `./translater --init' first for a better use experince."
     Engine.names
   end
 end
