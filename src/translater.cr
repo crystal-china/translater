@@ -1,5 +1,11 @@
 require "selenium"
-require "./translater/**"
+require "./translater/selenium/*"
+require "./translater/version"
+require "./translater/ali"
+require "./translater/bing"
+require "./translater/baidu"
+require "./translater/youdao"
+require "./translater/tencent"
 
 enum FirefoxStatus
   FirstRun
@@ -169,7 +175,7 @@ if still not work, kill the geckodriver process manually before try again."
 
   def input_use_js(session, selector, content)
     document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
-    document_manager.execute_script(%{select = document.querySelector("#{selector}"); select.value = `#{content}`.trim()})
+    document_manager.execute_script(%{select = document.querySelector("#{selector}"); select.innerText = `#{content}`.trim()})
   end
 
   def input(element, content, wait_seconds = 0.05)
