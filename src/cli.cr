@@ -60,7 +60,7 @@ enum Engine
   Ali
   Baidu
   Bing
-  Tencent
+  # Tencent
   # Volc
   Youdao
 end
