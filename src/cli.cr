@@ -41,7 +41,7 @@ def available_engines
   if File.exists? ENGINE_INIT_FILE
     File.read(ENGINE_INIT_FILE).chomp.split("\n")
   else
-    STDERR.puts "Try run `./translater --init' first for a better use experince."
+    STDERR.puts "Try run `translater --init' at first launch for a better use experince."
     Engine.names
   end
 end
@@ -68,7 +68,8 @@ end
 debug_mode = false
 content = ""
 browser = Browser::Firefox
-engine_list = available_engines.shuffle![0..0]
+engine_list = [] of String
+
 timeout_seconds : Int32 = 10
 engine_init = false
 
@@ -162,7 +163,12 @@ USAGE
             rs.each do
               # If fastest_engine is empty, this block will be ignored.
               if (engine = Engine.parse(rs.read(String)))
-                engine_list = [engine.to_s]
+                if available_engines.map(&.downcase).includes? engine
+                  engine_list = [engine.to_s]
+                else
+                  STDERR.puts "The fastest engine is blocked by translater --init, selecting a random one."
+                  engine_list = available_engines.shuffle![0..0]
+                end
               end
             end
           end
@@ -254,7 +260,7 @@ def run_profile
                                 "NA"
                               end
 
-            ary.push "#{engine_name}: average spent #{elapsed_seconds} seconds for #{count} samples\n"
+            ary.push "#{engine_name}: average spent #{elapsed_seconds} seconds for #{count} samples\n" if elapsed_seconds != "NA"
           end
         end
       end
@@ -291,6 +297,10 @@ if content =~ /\p{Han}/
   target_language = TargetLanguage::English
 else
   target_language = TargetLanguage::Chinese
+end
+
+if engine_list.empty?
+  engine_list = available_engines.shuffle![0..0]
 end
 
 real_timeout = engine_list.includes?("Baidu") ? 20 : timeout_seconds
