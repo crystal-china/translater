@@ -1,3 +1,6 @@
+# The author of this shards use AI for translate, it not live maintain for now.
+
+
 # translater
 
 基于多翻译引擎的整句翻译命令行程序，仅支持 `中英`、`英中` 整句互译，会根据要翻译的语言自动判断。
