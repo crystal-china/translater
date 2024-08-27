@@ -1,5 +1,6 @@
 # The author of this shards use AI for translate, it not live maintain for now.
 
+Checking [use_ai_for_local_translate.md](./use_ai_for_local_translate.md)
 
 # translater
 
