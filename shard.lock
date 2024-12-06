@@ -2,7 +2,7 @@ version: 2.0
 shards:
   ameba:
     git: https://github.com/crystal-ameba/ameba.git
-    version: 1.6.1
+    version: 1.6.4
 
   db:
     git: https://github.com/crystal-lang/crystal-db.git
@@ -18,5 +18,5 @@ shards:
 
   timeout:
     git: https://github.com/wyhaines/timeout.cr.git
-    version: 0.1.0+git.commit.130d8893f5222ebaed06f743a3bdad7f6b2a7be7
+    version: 0.2.0
 
