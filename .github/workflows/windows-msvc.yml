@@ -9,17 +9,20 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Cache shards
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           path: ~/.cache/shards
           key: ${{ runner.os }}-shards-${{ hashFiles('shard.yml') }}
           restore-keys: ${{ runner.os }}-shards-
       - name: Download source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
       - name: Install SQLite
-        uses: ccorsi/setup-sqlite@v1.0.1
+        uses: ccorsi/setup-sqlite@v1.2.3
+        with:
+          sqlite-version: 3.53.4
+          sqlite-year: 2026
       - name: Install shards
         run: shards check || shards install --without-development
       - name: package information
