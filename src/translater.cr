@@ -7,7 +7,6 @@ require "./translater/selenium/*"
 require "./translater/version"
 require "./translater/ali"
 require "./translater/bing"
-require "./translater/baidu"
 require "./translater/youdao"
 
 enum TargetLanguage
@@ -21,7 +20,6 @@ end
 
 enum Engine
   Ali
-  Baidu
   Bing
   Youdao
 end
@@ -53,8 +51,6 @@ class Translater
     @port = case @engine
             in .ali?
               4444
-            in .baidu?
-              4445
             in .bing?
               4446
             in .youdao?
@@ -246,11 +242,6 @@ if still not work, kill the geckodriver process manually before try again."
         spawn_engine(Engine::Ali, browser, content, debug_mode, chan, start_time, target_language)
       end
 
-      if engines.includes? Engine::Baidu
-        print "Baidu "
-        spawn_engine(Engine::Baidu, browser, content, debug_mode, chan, start_time, target_language)
-      end
-
       if engines.includes? Engine::Bing
         print "Bing "
         spawn_engine(Engine::Bing, browser, content, debug_mode, chan, start_time, target_language)
@@ -333,8 +324,6 @@ if still not work, kill the geckodriver process manually before try again."
       case engine
       in .ali?
         Ali.new(browser, content, debug_mode, chan, start_time, target_language)
-      in .baidu?
-        Baidu.new(browser, content, debug_mode, chan, start_time, target_language)
       in .bing?
         Bing.new(browser, content, debug_mode, chan, start_time, target_language)
       in .youdao?

@@ -46,7 +46,7 @@ describe "translater CLI" do
   end
 
   it "rejects skipping every engine" do
-    result = run_cli(["--skip=ali,baidu,bing,youdao", "hello"])
+    result = run_cli(["--skip=ali,bing,youdao", "hello"])
 
     result.status.success?.should be_false
     result.error.should contain("At least one engine")

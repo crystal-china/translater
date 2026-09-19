@@ -84,7 +84,7 @@ USAGE
       "-s ENGINE",
       "--skip=ENGINE",
       "Specify engines which always skip for translate, support #{Engine.names.map(&.downcase).join(", ")}.
-    multi-engine is possible, joined with comma, e.g. -s baidu,youdao
+    multi-engine is possible, joined with comma, e.g. -s ali,youdao
     ") do |e|
       inputs = e.split(",")
       allowed_engine_list = Engine.values

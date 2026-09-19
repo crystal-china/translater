@@ -17,7 +17,7 @@ class Translater
 
       input_ele = session.find_by_selector_wait!(input_selector)
 
-      # 有道行为和百度类似。
+      # 有道输入框需要通过 DOM 操作清理残留内容。
 
       # 如果上次的翻译有残留
       if !input_ele.text.blank?
