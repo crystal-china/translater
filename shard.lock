@@ -2,11 +2,11 @@ version: 2.0
 shards:
   ameba:
     git: https://github.com/crystal-ameba/ameba.git
-    version: 1.6.4
+    version: 1.7.0
 
   db:
     git: https://github.com/crystal-lang/crystal-db.git
-    version: 0.13.1
+    version: 0.14.0
 
   selenium:
     git: https://github.com/zw963/selenium.cr.git
@@ -14,9 +14,4 @@ shards:
 
   sqlite3:
     git: https://github.com/crystal-lang/crystal-sqlite3.git
-    version: 0.21.0
-
-  timeout:
-    git: https://github.com/wyhaines/timeout.cr.git
-    version: 0.2.0
-
+    version: 0.23.0

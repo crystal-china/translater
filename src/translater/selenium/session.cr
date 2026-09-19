@@ -1,36 +1,18 @@
-require "timeout"
-
 class Selenium::Session
-  # def find_by_selector_timeout!(selector : String, *, was_hidden : Bool = false, timeout seconds : Number = 0.2)
-  #   element : Selenium::Element? = nil
-
-  #   timeout(seconds) do
-  #     until element = find_by_selector(selector, was_hidden: was_hidden)
-  #       sleep 0.05
-  #     end
-  #   end
-
-  #   element.not_nil!
-  # rescue e : Timeout::Error
-  #   e.inspect_with_backtrace(STDERR)
-  #   STDERR.puts "CSS selector #{selector} was timeout for #{seconds} seconds!"
-  #   exit(1)
-  # end
-
   def find_by_selector_timeout(selector : String, *, was_hidden : Bool = false, timeout seconds : Number = 0.2)
-    element : Selenium::Element? = nil
+    deadline = Time.instant + seconds.seconds
 
-    timeout(seconds) do
-      until (element = find_by_selector selector, was_hidden: was_hidden)
-        sleep 0.05
+    loop do
+      if element = find_by_selector(selector, was_hidden: was_hidden)
+        return element
       end
+
+      break if Time.instant >= deadline
+
+      sleep 50.milliseconds
     end
 
-    element.not_nil!
-  rescue e : Timeout::Error
-    # e.inspect_with_backtrace(STDERR)
     STDERR.puts "CSS selector #{selector} timeout for #{seconds} seconds!"
-
     nil
   end
 
