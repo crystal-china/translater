@@ -3,7 +3,7 @@ class Translater
     # ali only support at most three hundred words english to translate.
     # so split the translate content into chunk less than 300 words
     def input(t, ele, content, document_manager, session)
-      # 阿里的 input_selector 和 output_selector 总是都存在，因此可以使用 js 清除（类似于腾讯)
+      # Ali's input and output selectors are always present, so JavaScript can clear them.
       input_selector = "textarea#source"
       output_selector = "pre#pre"
 

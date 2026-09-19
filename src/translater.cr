@@ -9,7 +9,6 @@ require "./translater/ali"
 require "./translater/bing"
 require "./translater/baidu"
 require "./translater/youdao"
-# require "./translater/tencent"
 
 enum TargetLanguage
   Chinese
@@ -58,12 +57,8 @@ class Translater
               4445
             in .bing?
               4446
-              # in .tencent?
-              #   4447
             in .youdao?
               4448
-              # in .volc?
-              # 4449
             end
 
     if target_language.english?
@@ -260,16 +255,6 @@ if still not work, kill the geckodriver process manually before try again."
         print "Bing "
         spawn_engine(Engine::Bing, browser, content, debug_mode, chan, start_time, target_language)
       end
-
-      # if engine_list.includes? "Tencent"
-      #   print "Tencent "
-      #   spawn Tencent.new(browser, content, debug_mode, chan, start_time, target_language)
-      # end
-
-      # if engine_list.includes? "Volc"
-      #   print "Volc "
-      #   spawn Volc.new(browser, content, debug_mode, chan, start_time, target_language)
-      # end
 
       if engines.includes? Engine::Youdao
         print "Youdao "
