@@ -1,74 +1,21 @@
 require "option_parser"
 require "./translater"
-require "db"
-require "sqlite3"
 
-XDG_DATA_HOME = Path[ENV.fetch("XDG_DATA_HOME", "~/.local/share")]
-
-def find_db_path(name)
-  default_path = (
-    XDG_DATA_HOME /
-    "translater" /
-    name
-  ).expand(home: true)
-
-  db_file_paths = {
-    default_path,
-    (Path["#{Process.executable_path.as(String)}/../.."] / name).expand,
-    Path["~/.#{name}"].expand(home: true),
-  }
-
-  db_file_paths.each do |path|
-    return path if File.exists?(path)
-  end
-
-  Dir.mkdir_p(default_path.dirname)
-
-  default_path
-end
-
-PROFILE_DB_FILE  = "sqlite3:#{find_db_path("profile.db")}"
-SESSION_DB_FILE  = "sqlite3:#{find_db_path("session.db")}"
-ENGINE_INIT_FILE = "#{Dir.tempdir}/translater_engine_init"
-
-def profile_db_exists?
-  db_file = PROFILE_DB_FILE.split(':')[1]
-
-  File.exists?(db_file) && File.info(db_file).size > 0
-end
-
-def available_engines
+def available_engines : Array(Engine)
   if File.exists? ENGINE_INIT_FILE
-    File.read(ENGINE_INIT_FILE).chomp.split("\n")
+    File.read_lines(ENGINE_INIT_FILE).compact_map do |name|
+      Engine.parse?(name.strip)
+    end
   else
     STDERR.puts "Try run `translater --init' at first launch for a better use experince."
-    Engine.names
+    Engine.values
   end
-end
-
-enum TargetLanguage
-  Chinese
-  English
-end
-
-enum Browser
-  Firefox
-  Chrome
-end
-
-enum Engine
-  Ali
-  Baidu
-  Bing
-  # Tencent
-  # Volc
-  Youdao
 end
 
 debug_mode = false
 content = ""
 browser = Browser::Firefox
-engine_list = [] of String
+engine_list = [] of Engine
 
 timeout_seconds : Int32 = 10
 engine_init = false
@@ -108,9 +55,9 @@ USAGE
     #     end
 
     parser.on(
-      "--init", "Check engines if work, and disable it if not available.") do |e|
+      "--init", "Check engines if work, and disable it if not available.") do
       run_profile
-      engine_list = Engine.names
+      engine_list = Engine.values
       content = "hello world!"
       engine_init = true
     end
@@ -119,14 +66,14 @@ USAGE
       "-e ENGINE",
       "--engine=ENGINE",
       "Specify engines used for translate, support #{Engine.names.map(&.downcase).join(", ")}.
-    multi-engine is possible, joined with comma, e.g. -e youdao,tencent
+    multi-engine is possible, joined with comma, e.g. -e youdao,bing
     ") do |e|
       inputs = e.split(",")
-      engine_list = [] of String
+      engine_list = [] of Engine
 
       inputs.each do |i|
         if (engine = Engine.parse?(i))
-          engine_list << engine.to_s
+          engine_list << engine
         else
           abort "Supported options: #{Engine.names.map(&.downcase).join ", "}"
         end
@@ -140,17 +87,19 @@ USAGE
     multi-engine is possible, joined with comma, e.g. -s baidu,youdao
     ") do |e|
       inputs = e.split(",")
-      allowed_engine_list = Engine.names
+      allowed_engine_list = Engine.values
 
       inputs.each do |i|
         if (engine = Engine.parse?(i))
-          allowed_engine_list.delete(engine.to_s)
+          allowed_engine_list.delete(engine)
         else
           abort "Supported options: #{Engine.names.map(&.downcase).join ", "}"
         end
       end
 
-      engine_list = allowed_engine_list.shuffle![0..0]
+      abort "At least one engine must remain after --skip." if allowed_engine_list.empty?
+
+      engine_list = [allowed_engine_list.sample]
     end
 
     parser.on(
@@ -163,11 +112,12 @@ USAGE
             rs.each do
               # If fastest_engine is empty, this block will be ignored.
               if (engine = Engine.parse(rs.read(String)))
-                if available_engines.map(&.downcase).includes? engine
-                  engine_list = [engine.to_s]
+                if available_engines.includes? engine
+                  engine_list = [engine]
                 else
                   STDERR.puts "The fastest engine is blocked by translater --init, selecting a random one."
-                  engine_list = available_engines.shuffle![0..0]
+                  engines = available_engines
+                  engine_list = [engines.sample] if engines.present?
                 end
               end
             end
@@ -187,7 +137,9 @@ USAGE
     parser.on(
       "--timeout=SECONDS",
       "Specify timeout for get translate result, default is 10 seconds") do |seconds|
-      timeout_seconds = seconds.to_i
+      parsed_seconds = seconds.to_i?
+      abort "Timeout must be a positive integer." unless parsed_seconds && parsed_seconds > 0
+      timeout_seconds = parsed_seconds
     end
 
     parser.unknown_args do |args|
@@ -267,6 +219,11 @@ def run_profile
 
       ary.sort_by! &.[/[\d\.]+/].to_f64
 
+      if ary.empty?
+        STDERR.puts "No profile samples exist yet. Run a translation or `translater --init` first."
+        return
+      end
+
       fastest_engine = ary[0][/(\w+):/, 1]
 
       db.exec("INSERT INTO fastest_engine (id,name) VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET name = ?;", 1, fastest_engine, fastest_engine)
@@ -300,17 +257,19 @@ else
 end
 
 if engine_list.empty?
-  engine_list = available_engines.shuffle![0..0]
+  engines = available_engines
+  abort "No translation engine is currently available. Run `translater --init`." if engines.empty?
+  engine_list = [engines.sample]
 end
 
-real_timeout = engine_list.includes?("Baidu") ? 20 : timeout_seconds
-
-Translater.run(
+success = Translater.run(
   content: content,
   target_language: target_language,
   debug_mode: debug_mode,
   browser: browser,
   engine_list: engine_list,
-  timeout_seconds: real_timeout,
+  timeout_seconds: timeout_seconds,
   engine_init: engine_init
 )
+
+exit 1 unless success

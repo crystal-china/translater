@@ -24,21 +24,19 @@ class Translater
 
       chunked_content = chunked_ary.to_a.map(&.join)
 
-      String.build do |io|
-        chunked_content.each do |c|
-          t.input(ele, c)
+      chunked_content.map do |c|
+        t.input(ele, c)
 
-          result = session.find_by_selector_wait!(output_selector) { |e| !e.text.blank? }
+        result = session.find_by_selector_wait!(output_selector) { |e| !e.text.blank? }
+        translated_text = result.text
 
-          io << result.text
-          io << ", "
+        document_manager.execute_script(%{select = document.querySelector("#{input_selector}"); select.value = "";})
+        document_manager.execute_script(%{select = document.querySelector("#{output_selector}"); select.innerText = "";})
 
-          document_manager.execute_script(%{select = document.querySelector("#{input_selector}"); select.value = "";})
-          document_manager.execute_script(%{select = document.querySelector("#{output_selector}"); select.innerText = "";})
+        sleep 100.milliseconds
 
-          sleep 0.1
-        end
-      end
+        translated_text
+      end.join(", ")
     end
 
     def initialize(browser, content, debug_mode, chan, start_time, target_language)
@@ -59,16 +57,14 @@ class Translater
         gets
       end
 
-      chan.send({text, self.class.name.split(":")[-1], Time.monotonic - start_time, browser, is_new_session})
-    rescue e : Socket::ConnectError
-      STDERR.puts e.message
-      exit 1
-    rescue e : Selenium::Error
-      STDERR.puts e.message
-      abort "Network connection error?"
-      # ensure
-      #   session.delete if session
-      # driver.stop if driver
+      chan.send EngineResult.new(
+        engine: Engine::Ali,
+        text: text,
+        elapsed: Time.instant - start_time,
+        browser: browser,
+        cached: !is_new_session,
+        error: nil
+      )
     end
   end
 end

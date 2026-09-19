@@ -1,4 +1,8 @@
 require "selenium"
+require "set"
+require "db"
+require "sqlite3"
+require "./translater/config"
 require "./translater/selenium/*"
 require "./translater/version"
 require "./translater/ali"
@@ -7,11 +11,38 @@ require "./translater/baidu"
 require "./translater/youdao"
 # require "./translater/tencent"
 
+enum TargetLanguage
+  Chinese
+  English
+end
+
+enum Browser
+  Firefox
+end
+
+enum Engine
+  Ali
+  Baidu
+  Bing
+  Youdao
+end
+
+record EngineResult,
+  engine : Engine,
+  text : String?,
+  elapsed : Time::Span,
+  browser : Browser,
+  cached : Bool,
+  error : Exception? do
+  def success? : Bool
+    error.nil? && text.try { |value| !value.blank? } == true
+  end
+end
+
 enum FirefoxStatus
   FirstRun
   Ready
   Started
-  Unknown
 end
 
 class Translater
@@ -42,19 +73,14 @@ class Translater
     @driver = Selenium::Driver.for(:firefox, base_url: "http://localhost:#{port}")
   end
 
-  private def chrome_ready?(driver)
-    driver.status.ready?
-  rescue Socket::ConnectError
-    false
-  end
-
   private def firefox_status : FirefoxStatus
-    if driver.status.message == "Session already started"
-      FirefoxStatus::Started
-    elsif driver.status.ready?
+    if driver.status.ready?
       FirefoxStatus::Ready
     else
-      FirefoxStatus::Unknown
+      # WebDriver's `ready` field indicates whether it can accept a new
+      # session. A responsive single-session geckodriver that is not ready
+      # therefore already owns a session, regardless of its localized message.
+      FirefoxStatus::Started
     end
   rescue Socket::ConnectError
     FirefoxStatus::FirstRun
@@ -129,7 +155,7 @@ class Translater
           driver_path = Process.find_executable(driver_binary)
 
           if driver_path.nil?
-            abort "Selenium driver couldn't found on the path!
+            raise "Selenium driver couldn't be found on the path!
 try install it into #{driver_paths.join(" or ")} before continue, exit ..."
           end
         end
@@ -156,29 +182,35 @@ try install it into #{driver_paths.join(" or ")} before continue, exit ..."
         STDERR.puts "Try Terminating running driver(http://localhost:#{port}) because browser session is unavailable, but driver was started.
 if still not work, kill the geckodriver process manually before try again."
         driver.stop
-        exit 1
+        raise "The running WebDriver has no reusable browser session."
       end
     end
 
     # 重新获取更新后的的状态
     if firefox_status.started?
-      {session.not_nil!, is_new_session.not_nil!}
+      active_session = session.not_nil!
+      configure_session(active_session)
+      {active_session, is_new_session.not_nil!}
     else
       STDERR.puts "Try terminating running driver(http://localhost:#{port}) because #{driver.status.inspect}.
 if still not work, kill the geckodriver process manually before try again."
       DB.connect(SESSION_DB_FILE) { |db| db.exec "delete from #{table_name} where id = #{port};" }
       session.delete if session
       driver.stop
-      exit 1
+      raise "WebDriver failed to start or recover a browser session."
     end
   end
 
-  def input_use_js(session, selector, content)
-    document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
-    document_manager.execute_script(%{select = document.querySelector("#{selector}"); select.innerText = `#{content}`.trim()})
+  private def configure_session(session : Selenium::Session)
+    session.set_timeouts Selenium::TimeoutConfiguration.new(
+      script: 10_000,
+      page_load: 15_000,
+      implicit: 0
+    )
+    session.window_manager.set_window_rect(width: 1365_i64, height: 900_i64)
   end
 
-  def input(element, content, wait_seconds = 0.05)
+  def input(element, content, wait_interval = 50.milliseconds)
     if content.size > 30
       content1 = content[0..-10]
       content2 = content[-9..-1]
@@ -187,43 +219,46 @@ if still not work, kill the geckodriver process manually before try again."
 
       # 先粘贴，后手动输入，间隔时间不能太长。
       # 否则可能会造成 ali 的引擎，将后面手动输入的部分忽略
-      sleep 0.1
+      sleep 100.milliseconds
 
       content2.each_char do |e|
         element.send_keys(key: e.to_s)
-        sleep wait_seconds
+        sleep wait_interval
       end
     else
       content.each_char do |e|
         element.send_keys(key: e.to_s)
-        sleep wait_seconds
+        sleep wait_interval
       end
     end
   end
 
-  def self.run(content, target_language, debug_mode, browser, engine_list, timeout_seconds, engine_init)
-    return if content == "--help"
+  def self.run(content, target_language, debug_mode, browser, engine_list, timeout_seconds, engine_init) : Bool
+    return true if content == "--help"
+
+    engines = engine_list.uniq
+    return false if engines.empty?
 
     begin
-      chan = Channel(Tuple(String, String, Time::Span, Browser, Bool)).new
+      chan = Channel(EngineResult).new(engines.size)
 
-      start_time = Time.monotonic
+      start_time = Time.instant
 
       print "Using "
 
-      if engine_list.includes? "Ali"
+      if engines.includes? Engine::Ali
         print "Ali "
-        spawn Ali.new(browser, content, debug_mode, chan, start_time, target_language)
+        spawn_engine(Engine::Ali, browser, content, debug_mode, chan, start_time, target_language)
       end
 
-      if engine_list.includes? "Baidu"
+      if engines.includes? Engine::Baidu
         print "Baidu "
-        spawn Baidu.new(browser, content, debug_mode, chan, start_time, target_language)
+        spawn_engine(Engine::Baidu, browser, content, debug_mode, chan, start_time, target_language)
       end
 
-      if engine_list.includes? "Bing"
+      if engines.includes? Engine::Bing
         print "Bing "
-        spawn Bing.new(browser, content, debug_mode, chan, start_time, target_language)
+        spawn_engine(Engine::Bing, browser, content, debug_mode, chan, start_time, target_language)
       end
 
       # if engine_list.includes? "Tencent"
@@ -236,9 +271,9 @@ if still not work, kill the geckodriver process manually before try again."
       #   spawn Volc.new(browser, content, debug_mode, chan, start_time, target_language)
       # end
 
-      if engine_list.includes? "Youdao"
+      if engines.includes? Engine::Youdao
         print "Youdao "
-        spawn Youdao.new(browser, content, debug_mode, chan, start_time, target_language)
+        spawn_engine(Engine::Youdao, browser, content, debug_mode, chan, start_time, target_language)
       end
 
       puts
@@ -251,33 +286,84 @@ if still not work, kill the geckodriver process manually before try again."
         # 代表已经运行过 engine_init
         file = File.open(ENGINE_INIT_FILE, mode: "w") if engine_init
 
-        engine_list.size.times do
-          select
-          when result = chan.receive
-            translated_text, engine_name, time_span, browser, is_new_session = result
-            elapsed_seconds = sprintf("%.2f", time_span.total_seconds)
-            table_name = engine_name.underscore
+        pending_engines = engines.to_set
+        success_count = 0
+        deadline = Time.instant + timeout_seconds.seconds
 
-            db.exec "insert into #{table_name} (elapsed_seconds) values (?)", elapsed_seconds.to_f if db
-            file.puts engine_name if file
+        while pending_engines.present?
+          remaining = deadline - Time.instant
+          break if remaining <= Time::Span.zero
 
-            puts "---------- #{engine_name}, spent #{elapsed_seconds} seconds use #{browser}#{is_new_session ? "" : " cache"} ----------\n#{translated_text}"
-          when timeout timeout_seconds.seconds
-            STDERR.puts "Timeout for #{timeout_seconds} seconds!"
+          received_result = select
+          when engine_result = chan.receive
+            engine_result
+          when timeout remaining
+            nil
           end
 
-          # 不加这个，当访问多个表的时候，可能会出现 Invalid memory access 错误。
-          sleep 0.1
-        rescue e : SQLite3::Exception
-          e.inspect_with_backtrace(STDERR)
-          STDERR.puts "Visit table #{table_name} in db file #{PROFILE_DB_FILE} failed, try delete db file and retry."
+          break unless received_result
+
+          pending_engines.delete(received_result.engine)
+
+          if received_result.success?
+            translated_text = received_result.text.not_nil!
+            engine_name = received_result.engine.to_s
+            elapsed_seconds = sprintf("%.2f", received_result.elapsed.total_seconds)
+
+            if db
+              begin
+                db.exec "insert into #{engine_name.underscore} (elapsed_seconds) values (?)", elapsed_seconds.to_f
+              rescue error : SQLite3::Exception
+                STDERR.puts "Could not update #{PROFILE_DB_FILE}: #{error.message}"
+              end
+            end
+
+            file.puts engine_name if file
+            success_count += 1
+
+            puts "---------- #{engine_name}, spent #{elapsed_seconds} seconds use #{received_result.browser}#{received_result.cached ? " cache" : ""} ----------\n#{translated_text}"
+          else
+            message = received_result.error.try(&.message) || "returned an empty translation"
+            STDERR.puts "#{received_result.engine} failed: #{message}"
+          end
         end
+
+        if pending_engines.present?
+          STDERR.puts "Timed out after #{timeout_seconds} seconds waiting for: #{pending_engines.join(", ")}"
+        end
+
+        success_count > 0
       ensure
         db.close if db
         file.close if file
       end
     rescue e
       e.inspect_with_backtrace(STDERR)
+      false
+    end
+  end
+
+  private def self.spawn_engine(engine, browser, content, debug_mode, chan, start_time, target_language)
+    spawn(name: "translater-#{engine.to_s.downcase}") do
+      case engine
+      in .ali?
+        Ali.new(browser, content, debug_mode, chan, start_time, target_language)
+      in .baidu?
+        Baidu.new(browser, content, debug_mode, chan, start_time, target_language)
+      in .bing?
+        Bing.new(browser, content, debug_mode, chan, start_time, target_language)
+      in .youdao?
+        Youdao.new(browser, content, debug_mode, chan, start_time, target_language)
+      end
+    rescue error
+      chan.send EngineResult.new(
+        engine: engine,
+        text: nil,
+        elapsed: Time.instant - start_time,
+        browser: browser,
+        cached: false,
+        error: error
+      )
     end
   end
 end

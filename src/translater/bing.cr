@@ -8,46 +8,54 @@ class Translater
 
       document_manager = Selenium::DocumentManager.new(command_handler: session.command_handler, session_id: session.id)
 
-      input_selector = "textarea#tta_input_ta"
-      output_selector = "textarea#tta_output_ta"
+      input_selector = "#tta_input_ta"
+      output_selector = "#tta_output_ta"
       language_selector = "select#tta_tgtsl"
 
       input_ele = session.find_by_selector_wait! input_selector
 
-      language_selector_ele = session.find_by_selector_wait! "#{language_selector} option"
-
-      if target_language.chinese? && language_selector_ele.text != "Chinese Simplified"
-        # 如果输入内容是英文, 修改目标语言为中文
-        document_manager.execute_script(%{select = document.querySelector("#{language_selector}"); select.value = "zh-Hans"})
-      elsif target_language.english? && language_selector_ele.text != "English"
-        document_manager.execute_script(%{select = document.querySelector("#{language_selector}"); select.value = "en"})
-      end
+      target_language_code = target_language.chinese? ? "zh-Hans" : "en"
+      document_manager.execute_script(<<-JAVASCRIPT)
+        select = document.querySelector("#{language_selector}");
+        if (select.value !== "#{target_language_code}") {
+          select.value = "#{target_language_code}";
+          select.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        JAVASCRIPT
 
       input_ele.click
 
-      t.input(input_ele, content, wait_seconds: 0.1)
+      t.input(input_ele, content, wait_interval: 100.milliseconds)
 
       if debug_mode
         STDERR.puts "Press ENTER key to continue ..."
         gets
       end
 
-      while (result = document_manager.execute_script %{return document.querySelector("#{output_selector}").value})
-        break unless result.strip == "..."
+      deadline = Time.instant + 10.seconds
+      result = ""
+      loop do
+        result = document_manager.execute_script(
+          %(return document.querySelector("#{output_selector}")?.innerText || "")
+        ).strip
 
-        sleep 0.1
+        break unless result.empty? || result == "..."
+
+        if Time.instant >= deadline
+          raise Selenium::WaitTimeoutError.new("Timed out waiting for Bing translation output.")
+        end
+
+        sleep 100.milliseconds
       end
 
-      chan.send({result, self.class.name.split(":")[-1], Time.monotonic - start_time, browser, is_new_session})
-    rescue e : Socket::ConnectError
-      STDERR.puts e.message
-      exit 1
-    rescue e : Selenium::Error
-      STDERR.puts e.message
-      abort "Network connection error?"
-      # ensure
-      #   session.delete if session
-      # driver.stop if driver
+      chan.send EngineResult.new(
+        engine: Engine::Bing,
+        text: result,
+        elapsed: Time.instant - start_time,
+        browser: browser,
+        cached: !is_new_session,
+        error: nil
+      )
     end
   end
 end

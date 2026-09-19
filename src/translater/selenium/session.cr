@@ -1,4 +1,10 @@
+class Selenium::WaitTimeoutError < Exception
+end
+
 class Selenium::Session
+  DEFAULT_WAIT_TIMEOUT = 10.seconds
+  WAIT_INTERVAL        = 50.milliseconds
+
   def find_by_selector_timeout(selector : String, *, was_hidden : Bool = false, timeout seconds : Number = 0.2)
     deadline = Time.instant + seconds.seconds
 
@@ -7,69 +13,63 @@ class Selenium::Session
         return element
       end
 
-      break if Time.instant >= deadline
+      return if Time.instant >= deadline
 
-      sleep 50.milliseconds
+      sleep WAIT_INTERVAL
     end
-
-    STDERR.puts "CSS selector #{selector} timeout for #{seconds} seconds!"
-    nil
   end
 
-  def find_by_selector_wait!(selector : String, *, was_hidden : Bool = false, &) : Selenium::Element
-    element = nil
+  def find_by_selector_wait!(selector : String, *, was_hidden : Bool = false, timeout : Time::Span = DEFAULT_WAIT_TIMEOUT, &) : Selenium::Element
+    deadline = Time.instant + timeout
 
     loop do
-      until (element = find_by_selector selector, was_hidden: was_hidden)
-        sleep 0.05
+      if (element = find_by_selector selector, was_hidden: was_hidden) && yield(element)
+        return element
       end
 
-      result = yield element
-
-      break element if result
+      wait_for_next_poll(deadline, timeout, selector, "match the expected condition")
     end
-
-    element.not_nil!
-  rescue
-    STDERR.puts "CSS selector #{selector} is not exists."
-    exit(1)
   end
 
-  def find_by_selector_wait!(selector : String, *, was_hidden : Bool = false) : Selenium::Element
-    until (element = find_by_selector selector, was_hidden: was_hidden)
-      sleep 0.05
-    end
+  def find_by_selector_wait!(selector : String, *, was_hidden : Bool = false, timeout : Time::Span = DEFAULT_WAIT_TIMEOUT) : Selenium::Element
+    deadline = Time.instant + timeout
 
-    element
-  rescue
-    STDERR.puts "CSS selector #{selector} is not exists."
-    exit(1)
+    loop do
+      if element = find_by_selector selector, was_hidden: was_hidden
+        return element
+      end
+
+      wait_for_next_poll(deadline, timeout, selector, "appear")
+    end
   end
 
-  def find_by_selector_wait_disappear!(selector : String, *, was_hidden : Bool = false)
-    while find_by_selector(selector, was_hidden: was_hidden)
-      sleep 0.05
+  def find_by_selector_wait_disappear!(selector : String, *, was_hidden : Bool = false, timeout : Time::Span = DEFAULT_WAIT_TIMEOUT)
+    deadline = Time.instant + timeout
+
+    loop do
+      return unless find_by_selector(selector, was_hidden: was_hidden)
+
+      wait_for_next_poll(deadline, timeout, selector, "disappear")
     end
-  rescue
-    STDERR.puts "CSS selector #{selector} is never disppear."
-    exit(1)
   end
 
   private def find_by_selector(selector : String, *, was_hidden : Bool = false) : Selenium::Element?
     elements = find_elements(:css, selector)
 
-    return nil if elements.empty?
+    return if elements.empty?
 
     e = elements.first
 
-    if e.displayed?
-      e
-    else
-      if was_hidden
-        e
-      else
-        nil
-      end
+    e if e.displayed? || was_hidden
+  end
+
+  private def wait_for_next_poll(deadline : Time::Instant, timeout : Time::Span, selector : String, condition : String)
+    if Time.instant >= deadline
+      raise Selenium::WaitTimeoutError.new(
+        "Timed out after #{timeout.total_seconds} seconds waiting for CSS selector #{selector.inspect} to #{condition}."
+      )
     end
+
+    sleep WAIT_INTERVAL
   end
 end

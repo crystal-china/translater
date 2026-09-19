@@ -1,12 +1,8 @@
-# The author of this shards use AI for translate, it not live maintain for now.
-
-Checking [use_ai_for_local_translate.md](./use_ai_for_local_translate.md)
-
 # translater
 
 基于多翻译引擎的整句翻译命令行程序，仅支持 `中英`、`英中` 整句互译，会根据要翻译的语言自动判断。
 
-目前支持如下如下引擎：
+目前启用以下引擎：
 
 [阿里翻译](https://translate.alibaba.com)
 
@@ -14,12 +10,12 @@ Checking [use_ai_for_local_translate.md](./use_ai_for_local_translate.md)
 
 [必应翻译](https://www.bing.com/translator)
 
-[腾讯翻译君](https://fanyi.qq.com)
-
 [有道翻译](https://fanyi.youdao.com/index.html)
 
-但是不保证以上所有引擎都可用, 建议电脑启动后第一次使用前, 运行 ./translater --init 
-来检测引擎可用性, 此操作会关闭所有不可用引擎, 确保稍后的使用体验.
+网页结构和反自动化策略会随时变化，因此不保证所有引擎始终可用。首次安装或发现引擎失效时，建议运行
+`translater --init` 检测引擎；检测结果会保存在 XDG 数据目录中，之后也可以随时重新检测。
+
+腾讯和火山翻译的网页适配目前未启用。火山翻译在正常浏览器中可用、在 WebDriver 中失败，属于站点对自动化浏览器的不同处理，不是简单更换 selector 就能稳定解决的问题。
 
 本工具适合中英文整句互译，如需翻译单词详细释义，请使用其他工具。
 
@@ -98,10 +94,10 @@ $: make release
 $: sudo make install
 ```
 
-## TODO
+## 已知限制
 
-1. 支持字节的火山翻译引擎, 当前，甚至非 headless 启动，手动输入翻译内容也不工作，字节，你真牛逼～
-2. 腾讯翻译现在也不能用了, 🌿你个垃圾腾讯!
+1. 翻译依赖第三方网页 DOM，不是官方 API；站点改版后可能需要更新 selector。
+2. 火山翻译和腾讯翻译当前禁用。若要长期稳定支持，优先考虑接入官方 API，而不是继续规避反自动化检测。
 
 ## Contributing
 

@@ -1,2 +1,3 @@
 require "spec"
-# require "../src/translater"
+require "file_utils"
+require "../src/translater"

@@ -39,17 +39,17 @@ release: lib
 
 .PHONY: spec
 spec: ## Run spec suite.
-spec: lib
+spec: $(O)
 	$(COMPILER) spec $(FLAGS) --order=random --error-on-warnings
 
 .PHONY: format
 format: ## Apply source code formatting
 format: $(SRC_SOURCES) $(SPEC_SOURCES)
-	$(CRYSTAL) tool format src spec
+	$(COMPILER) tool format src spec
 
 docs: ## Generate API docs
 docs: $(SRC_SOURCES) lib
-	$(CRYSTAL) docs
+	$(COMPILER) docs
 
 .PHONY: install
 install: $(O) ## Install the compiler at DESTDIR
@@ -67,7 +67,7 @@ check:
 
 .PHONY: lib
 lib: ## Install dependencies
-	$(SHARDS) install --without-development
+	$(SHARDS) install
 
 .PHONY: shard.lock
 shard.lock: shard.yml # Update dependencies

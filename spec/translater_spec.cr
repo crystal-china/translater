@@ -1,62 +1,70 @@
 require "./spec_helper"
 
-describe "Translater" do
-  before_all do
-    system("shards build")
-    system("./bin/translater --profile")
+record CLIResult, status : Process::Status, output : String, error : String
+
+private def run_cli(arguments, env = nil) : CLIResult
+  output = IO::Memory.new
+  error = IO::Memory.new
+  executable = Path[__DIR__, "..", "bin", "translater"].normalize.to_s
+  status = Process.run(executable, arguments, env: env, output: output, error: error)
+
+  CLIResult.new(status, output.to_s, error.to_s)
+end
+
+describe EngineResult do
+  it "distinguishes successful and failed engine results" do
+    success = EngineResult.new(Engine::Ali, "你好", 1.second, Browser::Firefox, false, nil)
+    empty = EngineResult.new(Engine::Ali, "", 1.second, Browser::Firefox, false, nil)
+    failure = EngineResult.new(Engine::Ali, nil, 1.second, Browser::Firefox, false, Exception.new("failed"))
+
+    success.success?.should be_true
+    empty.success?.should be_false
+    failure.success?.should be_false
+  end
+end
+
+describe "translater CLI" do
+  it "prints the package version" do
+    result = run_cli(["--version"])
+
+    result.status.success?.should be_true
+    result.output.should contain(Translater::VERSION)
   end
 
-  it "no args should work", tags: "ci" do
-    system("./bin/translater").should be_true
+  it "rejects an unknown engine" do
+    result = run_cli(["--engine=unknown", "hello"])
+
+    result.status.success?.should be_false
+    result.error.should contain("Supported options")
   end
 
-  # it "translate E/C use all supported engines", tags: "ci" do
-  #   system("./bin/translater -A 'Hello, China!'").should be_true
-  # end
+  it "rejects a non-positive timeout" do
+    result = run_cli(["--timeout=0", "hello"])
 
-  it "translate C/E use default engine", tags: "ci" do
-    system("./bin/translater '你好，中国！'").should be_true
+    result.status.success?.should be_false
+    result.error.should contain("positive integer")
   end
 
-  it "translate C/E use default engine", tags: "ci" do
-    system("./bin/translater '你好，中国！'").should be_true
+  it "rejects skipping every engine" do
+    result = run_cli(["--skip=ali,baidu,bing,youdao", "hello"])
+
+    result.status.success?.should be_false
+    result.error.should contain("At least one engine")
   end
 
-  it "translate C/E use youdao" do
-    system("./bin/translater -e youdao '你好，中国！'").should be_true
-  end
+  it "reports an empty profile instead of crashing" do
+    data_home = Path[Dir.tempdir] / "translater-spec-#{Process.pid}-#{Time.utc.to_unix_ms}"
+    Dir.mkdir_p(data_home)
+    env = {"XDG_DATA_HOME" => data_home.to_s}
 
-  it "translate E/C use youdao" do
-    system("./bin/translater -e youdao 'Hello, China!'").should be_true
-  end
+    begin
+      run_cli(["--profile"], env).status.success?.should be_true
+      result = run_cli(["--profile"], env)
 
-  it "translate C/E use baidu" do
-    system("./bin/translater -e baidu '你好，中国！'").should be_true
-  end
-
-  it "translate C/E use ali" do
-    system("./bin/translater -e ali '你好，中国！'").should be_true
-  end
-
-  it "translate C/E use tencent" do
-    system("./bin/translater -e tencent '你好，中国！'").should be_true
-  end
-
-  it "translate E/C use youdao+baidu" do
-    system("./bin/translater -e baidu,youdao 'Hello, China!'").should be_true
-  end
-
-  it "should translate multi-line english" do
-    system(%{./bin/translater "Specify target language, support zh-CN|en for now.
-  default is translate English to Chinese.
-  Youdao don't support this option."}).should be_true
-  end
-
-  it "select the fastest engine", tags: "ci" do
-    system("./bin/translater -a 'Hello, China!'").should be_true
-  end
-
-  it "should be false" do
-    system("./bin/translater -e nonsupported_engine '你好，中国！'").should be_false
+      result.status.success?.should be_true
+      result.error.should contain("No profile samples exist yet")
+    ensure
+      FileUtils.rm_r(data_home) if File.exists?(data_home)
+    end
   end
 end

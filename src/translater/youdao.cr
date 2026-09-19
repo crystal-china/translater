@@ -4,7 +4,7 @@ class Translater
       t = Translater.new(:youdao, debug_mode, target_language)
       session, is_new_session = t.find_or_create_firefox_session
 
-      session.navigate_to("https://fanyi.youdao.com/index.html#")
+      session.navigate_to("https://fanyi.youdao.com/index.html#/TextTranslate")
 
       if (ele1 = session.find_by_selector_timeout ".pop-up-comp.mask img.close")
         ele1.click
@@ -47,16 +47,14 @@ class Translater
       # 确保找到 output_selector 的元素，并且元素文本为空，否则重试
       result = session.find_by_selector_wait!(output_selector) { |e| !e.text.blank? }
 
-      chan.send({result.text, self.class.name.split(":")[-1], Time.monotonic - start_time, browser, is_new_session})
-    rescue e : Socket::ConnectError
-      STDERR.puts e.message
-      exit 1
-    rescue e : Selenium::Error
-      STDERR.puts e.message
-      abort "Network connection error?"
-      # ensure
-      #   session.delete if session
-      # driver.stop if driver
+      chan.send EngineResult.new(
+        engine: Engine::Youdao,
+        text: result.text,
+        elapsed: Time.instant - start_time,
+        browser: browser,
+        cached: !is_new_session,
+        error: nil
+      )
     end
   end
 end

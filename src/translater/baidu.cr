@@ -46,18 +46,14 @@ class Translater
 
       result = session.find_by_selector_wait!(output_selector) { |e| !e.text.blank? }
 
-      chan.send({result.text, self.class.name.split(":")[-1], Time.monotonic - start_time, browser, is_new_session})
-    rescue e : Socket::ConnectError
-      # e.inspect_with_backtrace(STDERR)
-      STDERR.puts e.message
-      exit 1
-    rescue e : Selenium::Error
-      # e.inspect_with_backtrace(STDERR)
-      STDERR.puts e.message
-      abort "Network connection error?"
-      # ensure
-      #   session.delete if session
-      # driver.stop if driver
+      chan.send EngineResult.new(
+        engine: Engine::Baidu,
+        text: result.text,
+        elapsed: Time.instant - start_time,
+        browser: browser,
+        cached: !is_new_session,
+        error: nil
+      )
     end
   end
 end
