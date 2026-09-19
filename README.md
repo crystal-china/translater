@@ -2,18 +2,14 @@
 
 基于多翻译引擎的整句翻译命令行程序，仅支持 `中英`、`英中` 整句互译，会根据要翻译的语言自动判断。
 
-目前启用以下引擎：
+当前代码包含以下翻译引擎：
 
-[阿里翻译](https://translate.alibaba.com)
+- [阿里翻译](https://translate.alibaba.com)：可用
+- [必应翻译](https://www.bing.com/translator)：可用
+- [有道翻译](https://fanyi.youdao.com/index.html#/TextTranslate)：可用
+- [百度翻译](https://fanyi.baidu.com)：当前会触发验证码，暂不可用
 
-[百度翻译](https://fanyi.baidu.com)
-
-[必应翻译](https://www.bing.com/translator)
-
-[有道翻译](https://fanyi.youdao.com/index.html)
-
-网页结构和反自动化策略会随时变化，因此不保证所有引擎始终可用。首次安装或发现引擎失效时，建议运行
-`translater --init` 检测引擎；检测结果会保存在 XDG 数据目录中，之后也可以随时重新检测。
+以上状态来自实际的 headless Firefox 测试，但网页结构和反自动化策略会随时变化，因此不保证引擎始终可用。首次安装或发现引擎失效时，请运行 `translater --init` 检测引擎；检测结果会保存在 XDG 数据目录中，默认选择引擎时会排除检测失败的百度等引擎。之后也可以随时重新检测。
 
 腾讯和火山翻译的网页适配目前未启用。火山翻译在正常浏览器中可用、在 WebDriver 中失败，属于站点对自动化浏览器的不同处理，不是简单更换 selector 就能稳定解决的问题。
 
@@ -97,7 +93,8 @@ $: sudo make install
 ## 已知限制
 
 1. 翻译依赖第三方网页 DOM，不是官方 API；站点改版后可能需要更新 selector。
-2. 火山翻译和腾讯翻译当前禁用。若要长期稳定支持，优先考虑接入官方 API，而不是继续规避反自动化检测。
+2. 百度翻译当前会触发验证码，无法作为稳定的 headless 引擎使用。
+3. 火山翻译和腾讯翻译当前禁用。若要长期稳定支持，优先考虑接入官方 API，而不是继续规避反自动化检测。
 
 ## Contributing
 
